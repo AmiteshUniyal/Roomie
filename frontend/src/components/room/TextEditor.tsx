@@ -40,6 +40,9 @@ export default function TextEditor({ document, roomId, isConnected }: TextEditor
     const { user } = useAppSelector((state) => state.auth);
     const [isTyping, setIsTyping] = useState(false);
     const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+    const updateTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+    const lastSentContentRef = useRef<string>('');
+    const isUpdatingFromSocketRef = useRef<boolean>(false);
 
     const editor = useEditor({
         extensions: [StarterKit],
@@ -47,31 +50,47 @@ export default function TextEditor({ document, roomId, isConnected }: TextEditor
         immediatelyRender: false,
         editorProps: {
             attributes: {
-                class: 'prose prose-lg max-w-none focus:outline-none p-6',
+                class: 'text-black max-w-none focus:outline-none p-6  leading-relaxed',
             },
         },
         onUpdate: ({ editor }) => {
+            if (!user || !document?.id || isUpdatingFromSocketRef.current) {
+                return;
+            }
+
             const content = editor.getHTML();
 
-            // Emit typing indicator
-            if (user) {
-                sendTypingIndicator(roomId, user.id, user.username, true);
-
-                // Clear previous timeout
-                if (typingTimeoutRef.current) {
-                    clearTimeout(typingTimeoutRef.current);
-                }
-
-                // Set timeout to stop typing indicator
-                typingTimeoutRef.current = setTimeout(() => {
-                    sendTypingIndicator(roomId, user.id, user.username, false);
-                }, 1000);
-
-                // Emit document update with debouncing
-                if (document?.id) {
-                    sendDocumentUpdate(document.id, content, user.id, roomId);
-                }
+            // Only send update if content actually changed
+            if (content === lastSentContentRef.current) {
+                return;
             }
+
+            // Emit typing indicator
+            sendTypingIndicator(roomId, user.id, user.username, true);
+
+            // Clear previous typing timeout
+            if (typingTimeoutRef.current) {
+                clearTimeout(typingTimeoutRef.current);
+            }
+
+            // Set timeout to stop typing indicator
+            typingTimeoutRef.current = setTimeout(() => {
+                sendTypingIndicator(roomId, user.id, user.username, false);
+            }, 1000);
+
+            // Clear previous update timeout
+            if (updateTimeoutRef.current) {
+                clearTimeout(updateTimeoutRef.current);
+            }
+
+            // Debounce document updates (300ms)
+            updateTimeoutRef.current = setTimeout(() => {
+                if (content !== lastSentContentRef.current) {
+                    console.log('📤 Sending document update:', content.substring(0, 50));
+                    sendDocumentUpdate(document.id, content, user.id, roomId);
+                    lastSentContentRef.current = content;
+                }
+            }, 300);
         },
     });
 
@@ -80,27 +99,34 @@ export default function TextEditor({ document, roomId, isConnected }: TextEditor
             // Only update if content is different to avoid cursor jumping
             const currentContent = editor.getHTML();
             if (currentContent !== document.content) {
+                console.log('🔄 Updating editor content from document:', document.content.substring(0, 50));
+                isUpdatingFromSocketRef.current = true;
                 editor.commands.setContent(document.content);
+                lastSentContentRef.current = document.content;
+                isUpdatingFromSocketRef.current = false;
             }
         }
     }, [document, editor]);
 
     useEffect(() => {
         // Listen for document updates from other users
-        const handleDocumentUpdate = (data: any) => {
+        const handleDocumentUpdate = (data: { documentId: string; userId: string; content: string }) => {
             console.log('📝 Received document update:', data);
             if (editor && document && data.documentId === document.id && data.userId !== user?.id) {
                 // Update content without triggering onUpdate
                 const currentContent = editor.getHTML();
                 if (currentContent !== data.content) {
-                    console.log('🔄 Updating editor content from:', currentContent.substring(0, 50), 'to:', data.content.substring(0, 50));
+                    console.log('🔄 Updating editor content from socket:', data.content.substring(0, 50));
+                    isUpdatingFromSocketRef.current = true;
                     editor.commands.setContent(data.content);
+                    lastSentContentRef.current = data.content;
+                    isUpdatingFromSocketRef.current = false;
                 }
             }
         };
 
         // Listen for typing indicators
-        const handleTypingIndicator = (data: any) => {
+        const handleTypingIndicator = (data: { userId: string; isTyping: boolean }) => {
             if (data.userId !== user?.id) {
                 setIsTyping(data.isTyping);
             }
@@ -118,6 +144,9 @@ export default function TextEditor({ document, roomId, isConnected }: TextEditor
         return () => {
             if (typingTimeoutRef.current) {
                 clearTimeout(typingTimeoutRef.current);
+            }
+            if (updateTimeoutRef.current) {
+                clearTimeout(updateTimeoutRef.current);
             }
         };
     }, []);
@@ -188,7 +217,7 @@ export default function TextEditor({ document, roomId, isConnected }: TextEditor
                     {/* Connection and typing status */}
                     <div className="flex items-center space-x-4">
                         {isTyping && (
-                            <div className="flex items-center space-x-2 text-sm text-gray-500">
+                            <div className="flex items-center space-x-2 text-sm text-black">
                                 <div className="flex space-x-1">
                                     <div className="w-1 h-1 bg-gray-400 rounded-full animate-bounce"></div>
                                     <div className="w-1 h-1 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>

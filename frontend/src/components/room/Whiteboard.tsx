@@ -59,7 +59,7 @@ export default function Whiteboard({ roomId, isConnected }: WhiteboardProps) {
         return () => {
             window.removeEventListener('resize', resizeCanvas);
         };
-    }, []);
+    }, [selectedColor, lineWidth]);
 
     useEffect(() => {
         if (contextRef.current) {
@@ -71,10 +71,17 @@ export default function Whiteboard({ roomId, isConnected }: WhiteboardProps) {
     useEffect(() => {
         // Listen for drawing data from other users
         const handleDrawing = (data: DrawingData) => {
-            if (data.userId === user?.id) return;
+            console.log(`🎨 Received drawing data from ${data.username}:`, data);
+            if (data.userId === user?.id) {
+                console.log(`⏭️ Skipping own drawing data`);
+                return;
+            }
 
             const context = contextRef.current;
-            if (!context) return;
+            if (!context) {
+                console.log(`❌ No canvas context available`);
+                return;
+            }
 
             const { drawData } = data;
 
@@ -188,6 +195,7 @@ export default function Whiteboard({ roomId, isConnected }: WhiteboardProps) {
         }
 
         // Emit start drawing event
+        console.log(`🎨 Starting drawing at (${x}, ${y}) with tool: ${selectedTool}`);
         sendCanvasDraw(roomId, user.id, {
             x,
             y,
@@ -217,6 +225,7 @@ export default function Whiteboard({ roomId, isConnected }: WhiteboardProps) {
             context.stroke();
 
             // Emit drawing data
+            console.log(`🎨 Drawing at (${x}, ${y}) with tool: ${selectedTool}`);
             sendCanvasDraw(roomId, user.id, {
                 x,
                 y,
@@ -295,7 +304,9 @@ export default function Whiteboard({ roomId, isConnected }: WhiteboardProps) {
                                     <button
                                         key={color}
                                         onClick={() => setSelectedColor(color)}
-                                        className={`w-6 h-6 rounded-full border-2 ${selectedColor === color ? 'border-gray-800' : 'border-gray-300'
+                                        className={`w-6 h-6 rounded-full border-2 transition-colors ${selectedColor === color
+                                            ? 'border-gray-800 shadow-sm'
+                                            : 'border-gray-300 hover:border-gray-400'
                                             }`}
                                         style={{ backgroundColor: color }}
                                     />
@@ -306,21 +317,23 @@ export default function Whiteboard({ roomId, isConnected }: WhiteboardProps) {
                         {/* Line width */}
                         <div className="flex items-center space-x-2">
                             <span className="text-sm text-gray-600">Width:</span>
-                            <input
-                                type="range"
-                                min="1"
-                                max="20"
-                                value={lineWidth}
-                                onChange={(e) => setLineWidth(Number(e.target.value))}
-                                className="w-20"
-                            />
-                            <span className="text-sm text-gray-600">{lineWidth}px</span>
+                            <div className="flex items-center space-x-2">
+                                <input
+                                    type="range"
+                                    min="1"
+                                    max="20"
+                                    value={lineWidth}
+                                    onChange={(e) => setLineWidth(Number(e.target.value))}
+                                    className="w-20 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                                />
+                                <span className="text-sm text-gray-600 min-w-[2.5rem]">{lineWidth}px</span>
+                            </div>
                         </div>
 
                         {/* Clear button */}
                         <button
                             onClick={clearCanvas}
-                            className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                            className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-sm font-medium"
                         >
                             🗑️ Clear
                         </button>
@@ -352,18 +365,20 @@ export default function Whiteboard({ roomId, isConnected }: WhiteboardProps) {
 
                 {!isConnected && (
                     <div className="absolute inset-0 bg-gray-100 bg-opacity-75 flex items-center justify-center">
-                        <div className="text-center">
-                            <div className="text-red-600 text-4xl mb-2">⚠️</div>
-                            <p className="text-gray-600">Connection lost. Reconnecting...</p>
+                        <div className="text-center p-6 bg-white rounded-lg shadow-lg border border-gray-200">
+                            <div className="text-red-600 text-4xl mb-3">⚠️</div>
+                            <h3 className="text-lg font-semibold text-gray-900 mb-2">Connection Lost</h3>
+                            <p className="text-gray-600">Attempting to reconnect...</p>
                         </div>
                     </div>
                 )}
 
                 {isLoadingCanvas && (
                     <div className="absolute inset-0 bg-white bg-opacity-75 flex items-center justify-center">
-                        <div className="text-center">
-                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
-                            <p className="text-gray-600">Loading canvas...</p>
+                        <div className="text-center p-6 bg-white rounded-lg shadow-lg border border-gray-200">
+                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-3"></div>
+                            <h3 className="text-lg font-semibold text-gray-900 mb-2">Loading Canvas</h3>
+                            <p className="text-gray-600">Restoring your drawing...</p>
                         </div>
                     </div>
                 )}

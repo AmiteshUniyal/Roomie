@@ -85,7 +85,7 @@ export default function LoginPage() {
                                 value={formData.email}
                                 onChange={handleInputChange}
                                 required
-                                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                                className="w-full px-4 py-3 text-black border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
                                 placeholder="Enter your email"
                             />
                         </div>
@@ -103,7 +103,7 @@ export default function LoginPage() {
                                     value={formData.password}
                                     onChange={handleInputChange}
                                     required
-                                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors pr-12"
+                                    className="w-full px-4 py-3 text-black border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors pr-12"
                                     placeholder="Enter your password"
                                 />
                                 <button
@@ -127,7 +127,7 @@ export default function LoginPage() {
                         <button
                             type="submit"
                             disabled={isLoading || !formData.email || !formData.password}
-                            className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 px-6 rounded-lg font-semibold hover:shadow-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="w-full bg-blue-600 text-white py-3 px-6 rounded-lg font-semibold hover:shadow-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             {isLoading ? (
                                 <div className="flex items-center justify-center">
@@ -150,7 +150,7 @@ export default function LoginPage() {
                     {/* Sign Up Link */}
                     <div className="text-center">
                         <p className="text-gray-600">
-                            Don't have an account?{' '}
+                            Don&apos;t have an account?{' '}
                             <Link href="/signup" className="text-blue-600 hover:text-blue-700 font-semibold">
                                 Sign up
                             </Link>

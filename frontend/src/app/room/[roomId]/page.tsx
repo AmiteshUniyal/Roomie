@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { useAppDispatch, useAppSelector } from '@/lib/store';
+import { useAppSelector } from '@/lib/store';
 import { useSocket } from '@/hooks/useSocket';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import RoomHeader from '@/components/room/RoomHeader';
@@ -17,12 +17,13 @@ import { documentService } from '@/lib/services/documentService';
 export default function RoomPage() {
     const params = useParams();
     const router = useRouter();
-    const dispatch = useAppDispatch();
+    // const dispatch = useAppDispatch();
     const { user, isAuthenticated } = useAppSelector((state) => state.auth);
     const roomId = params.roomId as string;
 
     const {
         isConnected,
+        isConnecting,
         connect,
         joinRoom,
         roomMembers,
@@ -44,17 +45,27 @@ export default function RoomPage() {
 
     // Handle user joined/left events
     useEffect(() => {
-        const handleUserJoined = (userData: any) => {
+        const handleUserJoined = (userData: { userId: string; username: string }) => {
             console.log('👤 User joined:', userData);
         };
 
-        const handleUserLeft = (userData: any) => {
+        const handleUserLeft = (userData: { userId: string; username: string }) => {
             console.log('👋 User left:', userData);
         };
 
         onUserJoined(handleUserJoined);
         onUserLeft(handleUserLeft);
     }, [onUserJoined, onUserLeft]);
+
+    // Connect to socket when user is authenticated
+    useEffect(() => {
+        if (isAuthenticated && user && !isConnected && !isConnecting) {
+            console.log('🔌 Connecting to socket server...');
+            connect(user.id, user.username).catch((error) => {
+                console.error('❌ Failed to connect to socket:', error);
+            });
+        }
+    }, [isAuthenticated, user, isConnected, isConnecting, connect]);
 
     useEffect(() => {
         const fetchRoomData = async () => {
@@ -155,7 +166,7 @@ export default function RoomPage() {
                     <div className="text-center">
                         <div className="text-red-600 text-xl mb-4">❌</div>
                         <h2 className="text-2xl font-bold text-gray-800 mb-2">Room Not Found</h2>
-                        <p className="text-gray-600 mb-4">The room you're looking for doesn't exist.</p>
+                        <p className="text-gray-600 mb-4">The room you&apos;re looking for doesn&apos;t exist.</p>
                         <button
                             onClick={() => router.push('/dashboard')}
                             className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"

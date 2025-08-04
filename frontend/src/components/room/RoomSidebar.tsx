@@ -14,7 +14,7 @@ interface RoomSidebarProps {
     roomMembers?: UserPresence[];
 }
 
-export default function RoomSidebar({ room, documents, activeDocument, onDocumentChange, isConnected, showActiveUsers, roomMembers = [] }: RoomSidebarProps) {
+export default function RoomSidebar({ room, documents, activeDocument, onDocumentChange, isConnected, roomMembers = [] }: RoomSidebarProps) {
     const [activeTab, setActiveTab] = useState<'documents' | 'members'>('documents');
     const [showNewDocumentModal, setShowNewDocumentModal] = useState(false);
     const [newDocumentTitle, setNewDocumentTitle] = useState('');

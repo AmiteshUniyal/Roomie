@@ -68,7 +68,7 @@ interface UseSocketReturn {
         x: number;
         y: number;
         color: string;
-        tool: 'pen' | 'eraser' | 'highlighter';
+        tool: 'pen' | 'eraser' | 'brush';
         strokeWidth: number;
         type?: 'start' | 'draw' | 'end';
     }) => void;
@@ -82,7 +82,7 @@ interface UseSocketReturn {
 }
 
 export const useSocket = (options: UseSocketOptions = {}): UseSocketReturn => {
-    const { userId, username, roomId } = options;
+    const { userId, username } = options;
     // State
     const [isConnected, setIsConnected] = useState(false);
     const [isConnecting, setIsConnecting] = useState(false);
@@ -185,7 +185,7 @@ export const useSocket = (options: UseSocketOptions = {}): UseSocketReturn => {
         x: number;
         y: number;
         color: string;
-        tool: 'pen' | 'eraser' | 'highlighter';
+        tool: 'pen' | 'eraser' | 'brush';
         strokeWidth: number;
         type?: 'start' | 'draw' | 'end';
     }) => {
@@ -243,9 +243,9 @@ export const useSocket = (options: UseSocketOptions = {}): UseSocketReturn => {
         const handleDocumentUpdate = (data: DocumentUpdateData) => {
             console.log('📝 Document updated:', data);
             // Update the documents state with the new content
-            setDocuments(prev => 
-                prev.map(doc => 
-                    doc.id === data.documentId 
+            setDocuments(prev =>
+                prev.map(doc =>
+                    doc.id === data.documentId
                         ? { ...doc, content: data.content, updatedAt: new Date() }
                         : doc
                 )
@@ -298,27 +298,16 @@ export const useSocket = (options: UseSocketOptions = {}): UseSocketReturn => {
         };
     }, [isConnected]);
 
-    // Auto-connect if userId and username are provided
-    useEffect(() => {
-        if (userId && username && !isConnected && !isConnecting) {
-            connect(userId, username);
-        }
-    }, [userId, username, isConnected, isConnecting, connect]);
-
-    // Auto-join room if roomId is provided
-    useEffect(() => {
-        if (roomId && userId && username && isConnected) {
-            joinRoom(roomId, userId, username);
-        }
-    }, [roomId, userId, username, isConnected, joinRoom]);
-
     // Cleanup on unmount
     useEffect(() => {
         return () => {
             cleanupRef.current.forEach(cleanup => cleanup());
-            disconnect();
+            // Only disconnect if we're actually unmounting, not just re-rendering
+            if (isConnected) {
+                disconnect();
+            }
         };
-    }, [disconnect]);
+    }, [isConnected, disconnect]); // Empty dependency array to only run on unmount
 
     return {
         // Connection state

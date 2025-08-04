@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { useAppSelector } from '@/lib/store';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import roomService from '@/lib/services/roomService';
 
@@ -17,7 +16,7 @@ export default function CreateRoomPage() {
     const [error, setError] = useState<string | null>(null);
 
     const router = useRouter();
-    const { user } = useAppSelector((state) => state.auth);
+    // const { user } = useAppSelector((state) => state.auth);
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         const { name, value, type } = e.target;
@@ -70,7 +69,7 @@ export default function CreateRoomPage() {
                                 href="/dashboard"
                                 className="text-gray-600 hover:text-gray-900 transition-colors"
                             >
-                                ← Back to Dashboard
+                                ← Back
                             </Link>
                         </div>
                     </div>
@@ -197,8 +196,8 @@ export default function CreateRoomPage() {
                             <div className="mt-8 p-4 bg-blue-50 rounded-lg">
                                 <h3 className="font-semibold text-blue-900 mb-2">💡 Tips for a great room</h3>
                                 <ul className="text-sm text-blue-800 space-y-1">
-                                    <li>• Use a descriptive name that reflects the room's purpose</li>
-                                    <li>• Add a description to help team members understand the room's goals</li>
+                                    <li>• Use a descriptive name that reflects the room&apos;s purpose</li>
+                                    <li>• Add a description to help team members understand the room&apos;s goals</li>
                                     <li>• Choose privacy settings based on your collaboration needs</li>
                                     <li>• You can always change room settings later</li>
                                 </ul>

@@ -10,7 +10,7 @@ interface AuthProviderProps {
 
 export default function AuthProvider({ children }: AuthProviderProps) {
     const dispatch = useAppDispatch();
-    const { isAuthenticated, isLoading } = useAppSelector((state) => state.auth);
+    const { isLoading } = useAppSelector((state) => state.auth);
 
     useEffect(() => {
         // Check authentication status on app startup

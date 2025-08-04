@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { useAppSelector } from '@/lib/store';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import roomService from '@/lib/services/roomService';
 
@@ -13,7 +12,7 @@ export default function JoinRoomPage() {
     const [error, setError] = useState<string | null>(null);
 
     const router = useRouter();
-    const { user } = useAppSelector((state) => state.auth);
+    // const { user } = useAppSelector((state) => state.auth);
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const value = e.target.value.toUpperCase();
@@ -113,7 +112,7 @@ export default function JoinRoomPage() {
                                             onChange={handleInputChange}
                                             onPaste={handlePaste}
                                             required
-                                            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors text-center text-lg font-mono tracking-wider"
+                                            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors text-center text-lg font-mono tracking-wider text-black"
                                             placeholder="Enter room code"
                                             maxLength={10}
                                             autoComplete="off"
@@ -150,40 +149,17 @@ export default function JoinRoomPage() {
                                     )}
                                 </button>
                             </form>
-
-                            {/* Help Section */}
-                            <div className="mt-8 space-y-6">
-                                <div className="p-4 bg-blue-50 rounded-lg">
-                                    <h3 className="font-semibold text-blue-900 mb-2">💡 How to get a room code</h3>
-                                    <ul className="text-sm text-blue-800 space-y-1">
-                                        <li>• Ask the room owner to share the room code with you</li>
-                                        <li>• Room codes are usually shared via chat, email, or messaging</li>
-                                        <li>• Make sure you have permission to join the room</li>
-                                        <li>• Private rooms require approval from the room owner</li>
-                                    </ul>
-                                </div>
-
-                                <div className="p-4 bg-yellow-50 rounded-lg">
-                                    <h3 className="font-semibold text-yellow-900 mb-2">⚠️ Troubleshooting</h3>
-                                    <ul className="text-sm text-yellow-800 space-y-1">
-                                        <li>• Double-check the room code spelling</li>
-                                        <li>• Room codes are case-insensitive</li>
-                                        <li>• Make sure the room still exists and is active</li>
-                                        <li>• Contact the room owner if you're having trouble joining</li>
-                                    </ul>
-                                </div>
-                            </div>
                         </div>
 
                         {/* Alternative Actions */}
                         <div className="mt-8 text-center">
                             <p className="text-gray-600 mb-4">
-                                Don't have a room code?
+                                Don&apos;t have a room code?
                             </p>
                             <div className="flex flex-col sm:flex-row gap-4 justify-center">
                                 <Link
                                     href="/create-room"
-                                    className="bg-gradient-to-r from-green-600 to-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:shadow-lg transition-all duration-200"
+                                    className="bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:shadow-lg transition-all duration-200"
                                 >
                                     Create Your Own Room
                                 </Link>

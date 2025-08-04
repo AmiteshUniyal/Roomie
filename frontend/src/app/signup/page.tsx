@@ -88,7 +88,7 @@ export default function SignupPage() {
         }
 
         try {
-            const { confirmPassword, ...registerData } = formData;
+            const { ...registerData } = formData;
             await dispatch(registerUser(registerData)).unwrap();
             router.push('/dashboard');
         } catch (error) {
@@ -129,7 +129,7 @@ export default function SignupPage() {
                                 value={formData.username}
                                 onChange={handleInputChange}
                                 required
-                                className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors ${validationErrors.username ? 'border-red-300' : 'border-gray-300'
+                                className={`w-full px-4 py-3 border rounded-lg text-black focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors ${validationErrors.username ? 'border-red-300' : 'border-gray-300'
                                     }`}
                                 placeholder="Choose a username"
                             />
@@ -150,7 +150,7 @@ export default function SignupPage() {
                                 value={formData.email}
                                 onChange={handleInputChange}
                                 required
-                                className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors ${validationErrors.email ? 'border-red-300' : 'border-gray-300'
+                                className={`w-full px-4 py-3 border rounded-lg text-black focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors ${validationErrors.email ? 'border-red-300' : 'border-gray-300'
                                     }`}
                                 placeholder="Enter your email"
                             />
@@ -172,7 +172,7 @@ export default function SignupPage() {
                                     value={formData.password}
                                     onChange={handleInputChange}
                                     required
-                                    className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors pr-12 ${validationErrors.password ? 'border-red-300' : 'border-gray-300'
+                                    className={`w-full px-4 py-3 border rounded-lg text-black focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors pr-12 ${validationErrors.password ? 'border-red-300' : 'border-gray-300'
                                         }`}
                                     placeholder="Create a password"
                                 />
@@ -202,7 +202,7 @@ export default function SignupPage() {
                                     value={formData.confirmPassword}
                                     onChange={handleInputChange}
                                     required
-                                    className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors pr-12 ${validationErrors.confirmPassword ? 'border-red-300' : 'border-gray-300'
+                                    className={`w-full px-4 py-3 border rounded-lg text-black focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors pr-12 ${validationErrors.confirmPassword ? 'border-red-300' : 'border-gray-300'
                                         }`}
                                     placeholder="Confirm your password"
                                 />
@@ -230,7 +230,7 @@ export default function SignupPage() {
                         <button
                             type="submit"
                             disabled={isLoading || !formData.username || !formData.email || !formData.password || !formData.confirmPassword}
-                            className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 px-6 rounded-lg font-semibold hover:shadow-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="w-full bg-blue-600 text-white py-3 px-6 rounded-lg font-semibold hover:shadow-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             {isLoading ? (
                                 <div className="flex items-center justify-center">

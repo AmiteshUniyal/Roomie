@@ -13,12 +13,11 @@ interface RoomHeaderProps {
     user?: { id: string; username: string } | null;
 }
 
-export default function RoomHeader({ room, activeTab, onTabChange, isConnected, onToggleActiveUsers, user }: RoomHeaderProps) {
+export default function RoomHeader({ room, activeTab, onTabChange, isConnected, user }: RoomHeaderProps) {
     const router = useRouter();
     const [showMenu, setShowMenu] = useState(false);
 
     const handleLeaveRoom = () => {
-        // TODO: Implement leave room logic
         router.push('/dashboard');
     };
 
@@ -68,16 +67,7 @@ export default function RoomHeader({ room, activeTab, onTabChange, isConnected, 
 
                 {/* Right side - Actions */}
                 <div className="flex items-center space-x-4">
-                    {/* Active Users button */}
-                    <button
-                        onClick={onToggleActiveUsers}
-                        className="flex items-center space-x-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
-                    >
-                        <span>👥</span>
-                        <span>Active Users</span>
-                    </button>
-
-                    {/* Room Code - Only show to owner */}
+                    
                     {room.ownerId === user?.id && (
                         <div className="flex items-center space-x-2 px-4 py-2 bg-blue-50 border border-blue-200 rounded-lg">
                             <span className="text-sm text-blue-600 font-mono">{room.code || room.id}</span>
@@ -91,7 +81,6 @@ export default function RoomHeader({ room, activeTab, onTabChange, isConnected, 
                         </div>
                     )}
 
-                    {/* Room menu */}
                     <div className="relative">
                         <button
                             onClick={() => setShowMenu(!showMenu)}
@@ -102,25 +91,6 @@ export default function RoomHeader({ room, activeTab, onTabChange, isConnected, 
 
                         {showMenu && (
                             <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
-                                <button
-                                    onClick={() => {
-                                        setShowMenu(false);
-                                        // TODO: Open room settings
-                                    }}
-                                    className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                                >
-                                    Room Settings
-                                </button>
-                                <button
-                                    onClick={() => {
-                                        setShowMenu(false);
-                                        // TODO: Open member management
-                                    }}
-                                    className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                                >
-                                    Manage Members
-                                </button>
-                                <hr className="my-2" />
                                 <button
                                     onClick={() => {
                                         setShowMenu(false);

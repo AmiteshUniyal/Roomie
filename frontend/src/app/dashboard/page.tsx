@@ -16,7 +16,7 @@ export default function DashboardPage() {
 
     const dispatch = useAppDispatch();
     const router = useRouter();
-    const { user, isAuthenticated } = useAppSelector((state) => state.auth);
+    const { user } = useAppSelector((state) => state.auth);
 
     // Fetch user's rooms
     useEffect(() => {

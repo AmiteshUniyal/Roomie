@@ -8,6 +8,9 @@ class SocketManager {
     private reconnectAttempts = 0;
     private maxReconnectAttempts = 5;
     private reconnectDelay = 1000;
+    private userId: string | null = null;
+    private username: string | null = null;
+    private isConnecting = false;
 
     // Singleton pattern
     private static instance: SocketManager;
@@ -22,14 +25,34 @@ class SocketManager {
     // Connect to the server
     public connect(userId: string, username: string): Promise<void> {
         return new Promise((resolve, reject) => {
+            if (this.isConnecting) {
+                console.log('🔄 Already attempting to connect...');
+                return;
+            }
+
             try {
+                this.isConnecting = true;
+                this.userId = userId;
+                this.username = username;
+                
                 console.log('🔌 Attempting to connect to socket server:', config.socketUrl);
                 console.log('👤 User:', { userId, username });
 
-                // Connect to the backend server
+                // Disconnect existing socket if any
+                if (this.socket) {
+                    this.socket.disconnect();
+                    this.socket = null;
+                }
+
+                // Connect to the backend server with improved options
                 this.socket = io(config.socketUrl, {
                     transports: ['websocket', 'polling'],
                     autoConnect: true,
+                    reconnection: true,
+                    reconnectionAttempts: 5,
+                    reconnectionDelay: 1000,
+                    reconnectionDelayMax: 5000,
+                    timeout: 20000
                 });
 
                 this.setupEventListeners();
@@ -37,10 +60,16 @@ class SocketManager {
 
                 // Authenticate after connection
                 this.socket.on('connect', () => {
+                    console.log('✅ Connected to socket server');
+                    this.isConnected = true;
+                    this.isConnecting = false;
+                    this.reconnectAttempts = 0;
+                    
                     console.log('🔐 Authenticating user...');
                     this.socket?.emit('authenticate', { userId, username });
                 });
             } catch (error) {
+                this.isConnecting = false;
                 console.error('❌ Socket connection error:', error);
                 reject(error);
             }
@@ -50,9 +79,13 @@ class SocketManager {
     // Disconnect from the server
     public disconnect(): void {
         if (this.socket) {
+            console.log('🔌 Disconnecting from socket server');
             this.socket.disconnect();
             this.socket = null;
             this.isConnected = false;
+            this.isConnecting = false;
+            this.userId = null;
+            this.username = null;
         }
     }
 
@@ -61,6 +94,8 @@ class SocketManager {
         if (this.socket && this.isConnected) {
             console.log('🚪 Joining room:', { roomId, userId, username });
             this.socket.emit('join_room', { roomId });
+        } else {
+            console.log('❌ Cannot join room - socket not connected');
         }
     }
 
@@ -80,9 +115,11 @@ class SocketManager {
                 content,
                 userId,
                 roomId,
-                username: (this.socket as any).data?.user?.username || 'Unknown',
+                username: this.username || 'Unknown',
                 timestamp: Date.now(),
             });
+        } else {
+            console.log('❌ Cannot send document update - socket not connected');
         }
     }
 
@@ -102,28 +139,28 @@ class SocketManager {
     public sendTypingIndicator(roomId: string, userId: string, username: string, isTyping: boolean): void {
         if (this.socket && this.isConnected) {
             this.socket.emit('typing_indicator', {
+                roomId,
                 userId,
                 username,
                 isTyping,
-                roomId,
             });
         }
     }
 
-    // Send canvas drawing data
+    // Send canvas draw data
     public sendCanvasDraw(roomId: string, userId: string, data: {
         x: number;
         y: number;
         color: string;
-        tool: 'pen' | 'eraser' | 'highlighter';
+        tool: 'pen' | 'eraser' | 'brush';
         strokeWidth: number;
         type?: 'start' | 'draw' | 'end';
     }): void {
         if (this.socket && this.isConnected) {
-            this.socket.emit('canvas_draw', {
+            const drawData = {
                 roomId,
                 userId,
-                username: (this.socket as any).data?.user?.username || 'Unknown',
+                username: this.username || 'Unknown',
                 drawData: {
                     type: data.type || 'draw',
                     x: data.x,
@@ -133,7 +170,11 @@ class SocketManager {
                     tool: data.tool,
                 },
                 timestamp: Date.now(),
-            });
+            };
+            console.log(`🎨 Sending canvas draw event:`, drawData);
+            this.socket.emit('canvas_draw', drawData);
+        } else {
+            console.log(`❌ Cannot send canvas draw - socket not connected or not available`);
         }
     }
 
@@ -143,7 +184,7 @@ class SocketManager {
             this.socket.emit('canvas_clear', {
                 roomId,
                 userId,
-                username: (this.socket as any).data?.user?.username || 'Unknown',
+                username: this.username || 'Unknown',
             });
         }
     }
@@ -151,19 +192,18 @@ class SocketManager {
     // Listen for document updates
     public onDocumentUpdate(callback: (data: SocketEvents['doc:update']) => void): void {
         if (this.socket) {
-            this.socket.on('document_updated', callback);
             this.socket.on('document_update_realtime', callback);
         }
     }
 
-    // Listen for user joined
+    // Listen for user joined events
     public onUserJoined(callback: (data: SocketEvents['user:joined']) => void): void {
         if (this.socket) {
             this.socket.on('user_joined', callback);
         }
     }
 
-    // Listen for user left
+    // Listen for user left events
     public onUserLeft(callback: (data: SocketEvents['user:left']) => void): void {
         if (this.socket) {
             this.socket.on('user_left', callback);
@@ -185,14 +225,17 @@ class SocketManager {
     }
 
     // Listen for canvas draw events
-    public onCanvasDraw(callback: (data: any) => void): void {
+    public onCanvasDraw(callback: (data: SocketEvents['canvas:draw']) => void): void {
         if (this.socket) {
-            this.socket.on('canvas_draw_update', callback);
+            this.socket.on('canvas_draw_update', (data) => {
+                console.log(`🎨 Received canvas draw update:`, data);
+                callback(data);
+            });
         }
     }
 
     // Listen for canvas clear events
-    public onCanvasClear(callback: (data: any) => void): void {
+    public onCanvasClear(callback: (data: SocketEvents['canvas:clear']) => void): void {
         if (this.socket) {
             this.socket.on('canvas_cleared', callback);
         }
@@ -201,7 +244,10 @@ class SocketManager {
     // Listen for canvas state loaded events
     public onCanvasStateLoaded(callback: (data: SocketEvents['canvas:state:loaded']) => void): void {
         if (this.socket) {
-            this.socket.on('canvas_state_loaded', callback);
+            this.socket.on('canvas_state_loaded', (data) => {
+                console.log(`📂 Received canvas state loaded:`, data);
+                callback(data);
+            });
         }
     }
 
@@ -245,20 +291,30 @@ class SocketManager {
 
             if (reason === 'io server disconnect') {
                 // Server disconnected us, try to reconnect
-                this.socket?.connect();
+                console.log('🔄 Server disconnected, attempting to reconnect...');
+                setTimeout(() => {
+                    if (this.socket && !this.isConnected) {
+                        this.socket.connect();
+                    }
+                }, 1000);
             }
         });
 
         this.socket.on('connect_error', (error) => {
             console.error('❌ Socket connection error:', error);
             this.isConnected = false;
+            this.isConnecting = false;
 
             if (this.reconnectAttempts < this.maxReconnectAttempts) {
                 setTimeout(() => {
                     this.reconnectAttempts++;
                     console.log(`🔄 Attempting reconnect ${this.reconnectAttempts}/${this.maxReconnectAttempts}`);
-                    this.socket?.connect();
+                    if (this.socket) {
+                        this.socket.connect();
+                    }
                 }, this.reconnectDelay * this.reconnectAttempts);
+            } else {
+                console.error('❌ Max reconnection attempts reached');
             }
         });
 
@@ -284,6 +340,7 @@ class SocketManager {
         });
 
         this.socket.on('connect_error', (error) => {
+            this.isConnecting = false;
             reject(error);
         });
     }

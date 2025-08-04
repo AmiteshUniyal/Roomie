@@ -50,13 +50,13 @@ export const apiRequest = async <T>(
 export const api = {
     get: <T>(endpoint: string) => apiRequest<T>(endpoint),
 
-    post: <T>(endpoint: string, data?: any) =>
+    post: <T>(endpoint: string, data?: unknown) =>
         apiRequest<T>(endpoint, {
             method: 'POST',
             body: data ? JSON.stringify(data) : undefined,
         }),
 
-    put: <T>(endpoint: string, data?: any) =>
+    put: <T>(endpoint: string, data?: unknown) =>
         apiRequest<T>(endpoint, {
             method: 'PUT',
             body: data ? JSON.stringify(data) : undefined,
@@ -67,7 +67,7 @@ export const api = {
             method: 'DELETE',
         }),
 
-    patch: <T>(endpoint: string, data?: any) =>
+    patch: <T>(endpoint: string, data?: unknown) =>
         apiRequest<T>(endpoint, {
             method: 'PATCH',
             body: data ? JSON.stringify(data) : undefined,

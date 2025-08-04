@@ -45,16 +45,18 @@ export const canvasService = {
     // Load canvas state from database
     async loadCanvasState(roomId: string): Promise<CanvasState | null> {
         try {
+            console.log(`🔍 Loading canvas state for room ${roomId}`);
             const canvasState = await prisma.canvasState.findUnique({
                 where: { roomId },
             });
 
             if (!canvasState) {
+                console.log(`📭 No canvas state found for room ${roomId}`);
                 return null;
             }
 
             const state: CanvasState = JSON.parse(canvasState.state);
-            console.log(`📂 Canvas state loaded for room ${roomId}`);
+            console.log(`📂 Canvas state loaded for room ${roomId} with ${state.strokes.length} strokes`);
             return state;
         } catch (error) {
             console.error('Error loading canvas state:', error);
@@ -76,16 +78,43 @@ export const canvasService = {
         }
     },
 
-    // Add a stroke to the canvas state
+    // Add a stroke to the canvas state using true atomic operations
     async addStroke(roomId: string, stroke: CanvasStroke): Promise<void> {
         try {
-            const existingState = await this.loadCanvasState(roomId);
-            const newState: CanvasState = {
-                strokes: existingState ? [...existingState.strokes, stroke] : [stroke],
-                lastUpdated: new Date(),
-            };
+            console.log(`🎨 Adding stroke to room ${roomId}:`, stroke);
 
-            await this.saveCanvasState(roomId, newState);
+            // Use MongoDB's native atomic operations through Prisma's raw queries
+            // This is truly atomic - no race conditions possible
+            await prisma.$runCommandRaw({
+                update: 'CanvasState',
+                updates: [
+                    {
+                        q: { roomId: roomId },
+                        u: {
+                            $push: {
+                                'state.strokes': {
+                                    type: stroke.type,
+                                    x: stroke.x,
+                                    y: stroke.y,
+                                    color: stroke.color,
+                                    brushSize: stroke.brushSize,
+                                    tool: stroke.tool,
+                                    userId: stroke.userId,
+                                    username: stroke.username,
+                                    timestamp: stroke.timestamp
+                                }
+                            },
+                            $set: {
+                                'state.lastUpdated': new Date(),
+                                updatedAt: new Date()
+                            }
+                        },
+                        upsert: true
+                    }
+                ]
+            });
+
+            console.log(`✅ Stroke added atomically to room ${roomId}`);
         } catch (error) {
             console.error('Error adding stroke:', error);
             throw new Error('Failed to add stroke');

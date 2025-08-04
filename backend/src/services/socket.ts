@@ -84,9 +84,12 @@ export const setupSocketHandlers = (io: Server) => {
                 const userData = socket.data.user;
 
                 if (!userData) {
+                    console.log(`❌ User not authenticated for room join: ${socket.id}`);
                     socket.emit('error', { message: 'User not authenticated' });
                     return;
                 }
+
+                console.log(`🚪 User ${userData.username} attempting to join room ${roomId}`);
 
                 // Check if user has access to the room
                 const room = await prisma.room.findUnique({
@@ -99,6 +102,7 @@ export const setupSocketHandlers = (io: Server) => {
                 });
 
                 if (!room) {
+                    console.log(`❌ Room not found: ${roomId}`);
                     socket.emit('error', { message: 'Room not found' });
                     return;
                 }
@@ -107,12 +111,30 @@ export const setupSocketHandlers = (io: Server) => {
                 const isOwner = room.ownerId === userData.userId;
 
                 if (!isMember && !isOwner && !room.isPublic) {
+                    console.log(`❌ Access denied for user ${userData.username} to room ${roomId}`);
                     socket.emit('error', { message: 'Access denied' });
                     return;
                 }
 
                 // Join the room
                 socket.join(roomId);
+                console.log(`✅ User ${userData.username} joined room ${roomId}`);
+
+                // Load and send existing canvas state
+                try {
+                    const canvasState = await canvasService.loadCanvasState(roomId);
+                    if (canvasState && canvasState.strokes.length > 0) {
+                        socket.emit('canvas_state_loaded', {
+                            roomId,
+                            strokes: canvasState.strokes,
+                            lastUpdated: canvasState.lastUpdated
+                        });
+                        console.log(`📂 Sent ${canvasState.strokes.length} strokes to ${userData.username} in room ${roomId}`);
+                    }
+                } catch (error) {
+                    console.error('Failed to load canvas state:', error);
+                    // Don't fail room join if canvas loading fails
+                }
 
                 // Update user presence
                 await prisma.userPresence.upsert({
@@ -191,8 +213,9 @@ export const setupSocketHandlers = (io: Server) => {
             }
         });
 
-        // Handle document updates (with debouncing)
+        // Handle document updates (with improved debouncing)
         let documentUpdateTimers = new Map<string, NodeJS.Timeout>();
+        let lastContentMap = new Map<string, string>(); // Track last content per document
 
         socket.on('document_update', async (data: DocumentUpdateData & { roomId: string }) => {
             try {
@@ -203,6 +226,16 @@ export const setupSocketHandlers = (io: Server) => {
                     socket.emit('error', { message: 'Unauthorized' });
                     return;
                 }
+
+                // Check if content actually changed
+                const lastContent = lastContentMap.get(documentId);
+                if (lastContent === content) {
+                    console.log(`📝 Content unchanged for document ${documentId}, skipping update`);
+                    return;
+                }
+
+                // Update last content
+                lastContentMap.set(documentId, content);
 
                 // Check if user has access to the document
                 const document = await prisma.document.findUnique({
@@ -249,7 +282,7 @@ export const setupSocketHandlers = (io: Server) => {
                     clearTimeout(documentUpdateTimers.get(timerKey)!);
                 }
 
-                // Set new timer for debounced update
+                // Set new timer for debounced update (300ms instead of 1000ms)
                 const timer = setTimeout(async () => {
                     try {
                         // Update document in database
@@ -276,7 +309,7 @@ export const setupSocketHandlers = (io: Server) => {
                     } finally {
                         documentUpdateTimers.delete(timerKey);
                     }
-                }, 1000); // 1 second debounce
+                }, 300); // Reduced from 1000ms to 300ms
 
                 documentUpdateTimers.set(timerKey, timer);
 
@@ -288,6 +321,8 @@ export const setupSocketHandlers = (io: Server) => {
                     username,
                     timestamp
                 });
+
+                console.log(`📤 Real-time update sent for document ${documentId} by ${username}`);
 
             } catch (error) {
                 console.error('Document update error:', error);
@@ -567,10 +602,12 @@ export const setupSocketHandlers = (io: Server) => {
         // Handle canvas drawing
         socket.on('canvas_draw', async (data: CanvasDrawData) => {
             try {
+                console.log(`🎨 Received canvas draw event:`, data);
                 const { roomId, userId, username, drawData, timestamp } = data;
                 const userData = socket.data.user;
 
                 if (!userData || userData.userId !== userId) {
+                    console.log(`❌ Unauthorized canvas draw attempt by ${userId}`);
                     socket.emit('error', { message: 'Unauthorized' });
                     return;
                 }
@@ -600,6 +637,7 @@ export const setupSocketHandlers = (io: Server) => {
 
                 // Save stroke to database (only for 'draw' events to avoid spam)
                 if (drawData.type === 'draw') {
+                    console.log(`💾 Saving draw stroke to database for room ${roomId}`);
                     const stroke: CanvasStroke = {
                         type: drawData.type,
                         x: drawData.x,
@@ -614,10 +652,13 @@ export const setupSocketHandlers = (io: Server) => {
 
                     try {
                         await canvasService.addStroke(roomId, stroke);
+                        console.log(`✅ Stroke saved successfully`);
                     } catch (error) {
                         console.error('Failed to save stroke:', error);
                         // Don't fail the real-time sync if DB save fails
                     }
+                } else {
+                    console.log(`⏭️ Skipping database save for ${drawData.type} event`);
                 }
 
                 // Broadcast drawing data to all users in the room except sender
@@ -743,94 +784,11 @@ export const setupSocketHandlers = (io: Server) => {
             }
         });
 
-        // Handle room join - send existing canvas state
-        socket.on('join_room', async (data: { roomId: string }) => {
-            try {
-                const { roomId } = data;
-                const userData = socket.data.user;
 
-                if (!userData) {
-                    socket.emit('error', { message: 'Not authenticated' });
-                    return;
-                }
-
-                // Check if user has access to the room
-                const room = await prisma.room.findUnique({
-                    where: { id: roomId },
-                    include: {
-                        members: {
-                            where: { userId: userData.userId }
-                        }
-                    }
-                });
-
-                if (!room) {
-                    socket.emit('error', { message: 'Room not found' });
-                    return;
-                }
-
-                const isMember = room.members.length > 0;
-                const isOwner = room.ownerId === userData.userId;
-
-                if (!isMember && !isOwner && !room.isPublic) {
-                    socket.emit('error', { message: 'Access denied' });
-                    return;
-                }
-
-                // Join the room
-                socket.join(roomId);
-
-                // Load and send existing canvas state
-                try {
-                    const canvasState = await canvasService.loadCanvasState(roomId);
-                    if (canvasState && canvasState.strokes.length > 0) {
-                        socket.emit('canvas_state_loaded', {
-                            roomId,
-                            strokes: canvasState.strokes,
-                            lastUpdated: canvasState.lastUpdated
-                        });
-                        console.log(`📂 Sent ${canvasState.strokes.length} strokes to ${userData.username} in room ${roomId}`);
-                    }
-                } catch (error) {
-                    console.error('Failed to load canvas state:', error);
-                    // Don't fail room join if canvas loading fails
-                }
-
-                // Add user to room presence
-                await prisma.userPresence.upsert({
-                    where: { userId_roomId: { userId: userData.userId, roomId } },
-                    update: {
-                        lastSeen: new Date(),
-                        isTyping: false,
-                    },
-                    create: {
-                        userId: userData.userId,
-                        roomId,
-                        username: userData.username,
-                        lastSeen: new Date(),
-                        isTyping: false,
-                    },
-                });
-
-                // Broadcast user joined
-                socket.to(roomId).emit('user_joined', {
-                    userId: userData.userId,
-                    username: userData.username,
-                    avatar: userData.avatar,
-                    cursorPosition: null,
-                    isTyping: false,
-                    lastSeen: new Date(),
-                });
-
-                console.log(`🚪 User ${userData.username} joined room ${roomId}`);
-            } catch (error) {
-                console.error('Join room error:', error);
-                socket.emit('error', { message: 'Failed to join room' });
-            }
-        });
 
         // Handle disconnection
-        socket.on('disconnect', async () => {
+        socket.on('disconnect', async (reason) => {
+            console.log(`🔌 User disconnected: ${socket.id}, reason: ${reason}`);
             try {
                 const userData = socket.data.user;
                 if (userData) {
@@ -853,6 +811,14 @@ export const setupSocketHandlers = (io: Server) => {
 
                     // Remove from connected users
                     connectedUsers.delete(socket.id);
+
+                    // Clean up document update timers for this user
+                    for (const [timerKey, timer] of documentUpdateTimers.entries()) {
+                        if (timerKey.includes(userData.userId)) {
+                            clearTimeout(timer);
+                            documentUpdateTimers.delete(timerKey);
+                        }
+                    }
 
                     console.log(`🔌 User disconnected: ${userData.username} (${userData.userId})`);
                 }
