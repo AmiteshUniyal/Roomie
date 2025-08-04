@@ -1,0 +1,192 @@
+// User types
+export interface User {
+    id: string;
+    username: string;
+    email: string;
+    avatar?: string;
+    createdAt: Date;
+}
+
+// Document types
+export interface Document {
+    id: string;
+    title: string;
+    content: string;
+    roomId: string;
+    createdBy: string;
+    createdAt: Date;
+    updatedAt: Date;
+}
+
+// Room types
+export interface Room {
+    id: string;
+    name: string;
+    description?: string;
+    code: string; // Room code for sharing
+    ownerId: string;
+    isPublic: boolean;
+    createdAt: Date;
+    updatedAt: Date;
+}
+
+// Room member types
+export interface RoomMember {
+    userId: string;
+    roomId: string;
+    role: 'owner' | 'editor' | 'viewer';
+    joinedAt: Date;
+}
+
+// User presence in room
+export interface UserPresence {
+    userId: string;
+    username: string;
+    avatar?: string;
+    cursorPosition?: {
+        x: number;
+        y: number;
+    };
+    isTyping: boolean;
+    lastSeen: Date;
+}
+
+// Socket event types
+export interface SocketEvents {
+    // Connection events
+    'user:join': {
+        userId: string;
+        username: string;
+        roomId: string;
+    };
+    'user:leave': {
+        userId: string;
+        roomId: string;
+    };
+    'user:joined': UserPresence;
+    'user:left': {
+        userId: string;
+        username: string;
+    };
+
+    // Document editing events
+    'doc:update': {
+        documentId: string;
+        content: string;
+        userId: string;
+        username: string;
+        timestamp: number;
+    };
+    'doc:sync': {
+        roomId: string;
+        content: string;
+        version: number;
+    };
+
+    // Cursor and presence events
+    'user:cursor': {
+        userId: string;
+        username: string;
+        position: {
+            x: number;
+            y: number;
+        };
+        roomId: string;
+    };
+    'user:typing': {
+        userId: string;
+        username: string;
+        isTyping: boolean;
+        roomId: string;
+    };
+
+    // Room management events
+    'room:create': {
+        name: string;
+        description?: string;
+        isPublic: boolean;
+        ownerId: string;
+    };
+    'room:join': {
+        roomId: string;
+        userId: string;
+    };
+    'room:leave': {
+        roomId: string;
+        userId: string;
+    };
+    'room:kick': {
+        roomId: string;
+        userId: string;
+        kickedBy: string;
+    };
+
+    // Whiteboard events
+    'canvas:draw': {
+        roomId: string;
+        userId: string;
+        username: string;
+        drawData: {
+            type: 'start' | 'draw' | 'end';
+            x: number;
+            y: number;
+            color: string;
+            brushSize: number;
+            tool: 'pen' | 'eraser' | 'brush';
+        };
+        timestamp: number;
+    };
+    'canvas:clear': {
+        roomId: string;
+        userId: string;
+        username: string;
+        timestamp: Date;
+    };
+    'canvas:state:loaded': {
+        roomId: string;
+        strokes: Array<{
+            type: 'start' | 'draw' | 'end';
+            x: number;
+            y: number;
+            color: string;
+            brushSize: number;
+            tool: 'pen' | 'eraser' | 'brush';
+            userId: string;
+            username: string;
+            timestamp: number;
+        }>;
+        lastUpdated: Date;
+    };
+}
+
+// API response types
+export interface ApiResponse<T = unknown> {
+    success: boolean;
+    data?: T;
+    error?: string;
+    message?: string;
+}
+
+// Auth types
+export interface AuthState {
+    user: User | null;
+    isAuthenticated: boolean;
+    isLoading: boolean;
+}
+
+// Editor types
+export interface EditorState {
+    content: string;
+    isSaving: boolean;
+    lastSaved: Date | null;
+    version: number;
+}
+
+// Room state types
+export interface RoomState {
+    currentRoom: Room | null;
+    members: UserPresence[];
+    documents: Document[];
+    isLoading: boolean;
+    error: string | null;
+} 

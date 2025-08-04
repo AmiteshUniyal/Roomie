@@ -1,0 +1,137 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  username  String   @unique
+  email     String   @unique
+  password  String
+  avatar    String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  ownedRooms    Room[]         @relation("RoomOwner")
+  roomMembers   RoomMember[]
+  roomRequests  RoomRequest[]
+  documents     Document[]
+  userPresence  UserPresence[]
+
+  @@map("users")
+}
+
+model Room {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  name        String
+  description String?
+  code        String   @unique // Room code for sharing
+  isPublic    Boolean  @default(false)
+  ownerId     String   @db.ObjectId
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  owner       User         @relation("RoomOwner", fields: [ownerId], references: [id])
+  members     RoomMember[]
+  requests    RoomRequest[]
+  documents   Document[]
+  canvasState CanvasState?
+
+  @@map("rooms")
+}
+
+model RoomMember {
+  id       String @id @default(auto()) @map("_id") @db.ObjectId
+  userId   String @db.ObjectId
+  roomId   String @db.ObjectId
+  role     Role   @default(VIEWER)
+  joinedAt DateTime @default(now())
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  room Room @relation(fields: [roomId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, roomId])
+  @@map("room_members")
+}
+
+model Document {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  title     String
+  content   String   @default("")
+  roomId    String   @db.ObjectId
+  createdBy String   @db.ObjectId
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  room      Room @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  creator   User @relation(fields: [createdBy], references: [id])
+
+  @@map("documents")
+}
+
+model UserPresence {
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId        String   @db.ObjectId
+  roomId        String
+  username      String
+  avatar        String?
+  cursorPosition Json?   // { x: number, y: number }
+  isTyping      Boolean  @default(false)
+  isFocused     Boolean  @default(true)
+  lastActivity  String?  // Description of last activity
+  lastSeen      DateTime @default(now())
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, roomId])
+  @@map("user_presence")
+}
+
+model RoomRequest {
+  id        String      @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String      @db.ObjectId
+  roomId    String      @db.ObjectId
+  status    RequestStatus @default(PENDING)
+  message   String?     // Optional message from requester
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  room Room @relation(fields: [roomId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, roomId])
+  @@map("room_requests")
+}
+
+model CanvasState {
+    id        String   @id @default(auto()) @map("_id") @db.ObjectId
+    roomId    String   @unique
+    state     String   // JSON string containing canvas strokes or base64 image data
+    updatedAt DateTime @updatedAt
+    room      Room     @relation(fields: [roomId], references: [id], onDelete: Cascade)
+}
+
+enum Role {
+  OWNER
+  EDITOR
+  VIEWER
+}
+
+enum RequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
