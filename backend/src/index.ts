@@ -24,14 +24,14 @@ const server = createServer(app);
 // Create Socket.IO server
 const io = new Server(server, {
     cors: {
-        origin: "http://localhost:3000",
+        origin: process.env['SOCKET_CORS_ORIGIN'] || "http://localhost:3000",
         methods: ["GET", "POST"]
     }
 });
 
 // Middleware
 app.use(cors({
-    origin: "http://localhost:3000",
+    origin: process.env['CORS_ORIGIN'] || "http://localhost:3000",
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
     allowedHeaders: ['Content-Type', 'Authorization']
