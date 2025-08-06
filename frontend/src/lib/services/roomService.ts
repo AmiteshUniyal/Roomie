@@ -27,6 +27,21 @@ export interface DocumentsResponse {
     message: string;
 }
 
+export interface RoomRequest {
+    id: string;
+    userId: string;
+    username: string;
+    roomId: string;
+    roomName: string;
+    message?: string;
+    status: 'pending' | 'approved' | 'rejected';
+    createdAt: Date;
+}
+
+export interface RoomRequestsResponse {
+    requests: RoomRequest[];
+}
+
 // Room service class
 class RoomService {
     // Create a new room
@@ -70,13 +85,13 @@ class RoomService {
     }
 
     // Get user's requests
-    async getUserRequests(): Promise<{ requests: any[] }> {
-        return api.get<{ requests: any[] }>('/rooms/requests');
+    async getUserRequests(): Promise<RoomRequestsResponse> {
+        return api.get<RoomRequestsResponse>('/rooms/requests');
     }
 
     // Get room requests (owner only)
-    async getRoomRequests(roomId: string): Promise<{ requests: any[] }> {
-        return api.get<{ requests: any[] }>(`/rooms/${roomId}/requests`);
+    async getRoomRequests(roomId: string): Promise<RoomRequestsResponse> {
+        return api.get<RoomRequestsResponse>(`/rooms/${roomId}/requests`);
     }
 
     // Approve room request (owner only)
