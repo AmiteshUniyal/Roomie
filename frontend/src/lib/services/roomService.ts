@@ -65,18 +65,28 @@ class RoomService {
     }
 
     // Request access to private room
-    async requestRoomAccess(roomId: string): Promise<{ message: string }> {
-        return api.post<{ message: string }>(`/rooms/${roomId}/request`);
+    async requestRoomAccess(roomId: string, message?: string): Promise<{ message: string }> {
+        return api.post<{ message: string }>(`/rooms/${roomId}/request`, { message });
+    }
+
+    // Get user's requests
+    async getUserRequests(): Promise<{ requests: any[] }> {
+        return api.get<{ requests: any[] }>('/rooms/requests');
+    }
+
+    // Get room requests (owner only)
+    async getRoomRequests(roomId: string): Promise<{ requests: any[] }> {
+        return api.get<{ requests: any[] }>(`/rooms/${roomId}/requests`);
     }
 
     // Approve room request (owner only)
-    async approveRoomRequest(roomId: string, userId: string): Promise<{ message: string }> {
-        return api.post<{ message: string }>(`/rooms/${roomId}/approve`, { userId });
+    async approveRoomRequest(requestId: string): Promise<{ message: string }> {
+        return api.post<{ message: string }>(`/rooms/requests/${requestId}/approve`);
     }
 
     // Reject room request (owner only)
-    async rejectRoomRequest(roomId: string, userId: string): Promise<{ message: string }> {
-        return api.post<{ message: string }>(`/rooms/${roomId}/reject`, { userId });
+    async rejectRoomRequest(requestId: string): Promise<{ message: string }> {
+        return api.post<{ message: string }>(`/rooms/requests/${requestId}/reject`);
     }
 
     // Kick user from room (owner only)

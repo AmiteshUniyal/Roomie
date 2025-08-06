@@ -7,7 +7,6 @@ import { useSocket } from '@/hooks/useSocket';
 import { useAppSelector } from '@/lib/store';
 import { Document } from '@/types';
 
-// Client-side only component to prevent SSR issues
 const ClientOnlyEditor = ({ children }: { children: React.ReactNode }) => {
     const [isMounted, setIsMounted] = useState(false);
 
@@ -188,30 +187,6 @@ export default function TextEditor({ document, roomId, isConnected }: TextEditor
                             <s>S</s>
                         </button>
                         <div className="w-px h-6 bg-gray-300"></div>
-                        <button
-                            onClick={() => editor?.chain().focus().toggleHeading({ level: 1 }).run()}
-                            className={`p-2 rounded ${editor?.isActive('heading', { level: 1 }) ? 'bg-blue-100 text-blue-600' : 'text-gray-600 hover:text-gray-900'}`}
-                        >
-                            H1
-                        </button>
-                        <button
-                            onClick={() => editor?.chain().focus().toggleHeading({ level: 2 }).run()}
-                            className={`p-2 rounded ${editor?.isActive('heading', { level: 2 }) ? 'bg-blue-100 text-blue-600' : 'text-gray-600 hover:text-gray-900'}`}
-                        >
-                            H2
-                        </button>
-                        <button
-                            onClick={() => editor?.chain().focus().toggleBulletList().run()}
-                            className={`p-2 rounded ${editor?.isActive('bulletList') ? 'bg-blue-100 text-blue-600' : 'text-gray-600 hover:text-gray-900'}`}
-                        >
-                            •
-                        </button>
-                        <button
-                            onClick={() => editor?.chain().focus().toggleOrderedList().run()}
-                            className={`p-2 rounded ${editor?.isActive('orderedList') ? 'bg-blue-100 text-blue-600' : 'text-gray-600 hover:text-gray-900'}`}
-                        >
-                            1.
-                        </button>
                     </div>
 
                     {/* Connection and typing status */}

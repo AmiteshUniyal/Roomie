@@ -10,6 +10,7 @@ import TextEditor from '@/components/room/TextEditor';
 import Whiteboard from '@/components/room/Whiteboard';
 import UserPresence from '@/components/room/UserPresence';
 import RoomSidebar from '@/components/room/RoomSidebar';
+import RequestAccessModal from '@/components/room/RequestAccessModal';
 import { Room, Document } from '@/types';
 import roomService from '@/lib/services/roomService';
 import { documentService } from '@/lib/services/documentService';
@@ -42,6 +43,8 @@ export default function RoomPage() {
     const [showActiveUsers, setShowActiveUsers] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [showRequestModal, setShowRequestModal] = useState(false);
+    const [accessDenied, setAccessDenied] = useState(false);
 
     // Handle user joined/left events
     useEffect(() => {
@@ -89,6 +92,16 @@ export default function RoomPage() {
                 const roomResponse = await roomService.getRoom(roomId);
                 setRoom(roomResponse.room);
                 console.log('✅ Room data loaded:', roomResponse.room);
+
+                // Check if user has access to private room
+                if (!roomResponse.room.isPublic && roomResponse.room.ownerId !== user?.id) {
+                    // For private rooms, check if user is a member
+                    // This would need to be implemented in the backend
+                    // For now, we'll show the request access option
+                    setAccessDenied(true);
+                    setIsLoading(false);
+                    return;
+                }
 
                 // Fetch documents from API
                 try {
@@ -179,6 +192,48 @@ export default function RoomPage() {
         );
     }
 
+    if (accessDenied) {
+        return (
+            <ProtectedRoute>
+                <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center">
+                    <div className="text-center max-w-md">
+                        <div className="text-6xl mb-4">🔒</div>
+                        <h2 className="text-2xl font-bold text-gray-800 mb-2">Private Room</h2>
+                        <p className="text-gray-600 mb-6">
+                            This room is private. You need to request access to join.
+                        </p>
+                        <div className="space-y-3">
+                            <button
+                                onClick={() => setShowRequestModal(true)}
+                                className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors"
+                            >
+                                Request Access
+                            </button>
+                            <button
+                                onClick={() => router.push('/dashboard')}
+                                className="block w-full bg-gray-300 text-gray-700 px-6 py-3 rounded-lg hover:bg-gray-400 transition-colors"
+                            >
+                                Back to Dashboard
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <RequestAccessModal
+                    roomId={roomId}
+                    roomName={room.name}
+                    isOpen={showRequestModal}
+                    onClose={() => setShowRequestModal(false)}
+                    onSuccess={() => {
+                        setAccessDenied(false);
+                        // Refresh the page to load room data
+                        window.location.reload();
+                    }}
+                />
+            </ProtectedRoute>
+        );
+    }
+
     return (
         <ProtectedRoute>
             <div className="min-h-screen bg-gray-50 flex flex-col">
@@ -220,7 +275,7 @@ export default function RoomPage() {
                         onDocumentChange={(document) => {
                             setActiveDocument(document);
                             // Update documents list if needed
-                            if (!documents.find(d => d.id === document.id)) {
+                            if (document && !documents.find(d => d.id === document.id)) {
                                 setDocuments(prev => [...prev, document]);
                             }
                         }}

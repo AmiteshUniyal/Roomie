@@ -5,7 +5,7 @@ import { getDocumentByIdHandler } from '../controllers/documentControllers/getBy
 import { updateDocumentContentHandler } from '../controllers/documentControllers/updateContentHandler';
 import { updateDocumentTitleHandler } from '../controllers/documentControllers/updateTitleHandler';
 import { deleteDocumentHandler } from '../controllers/documentControllers/deleteHandler';
-import { authenticateToken } from '@/middleware/auth';
+import { authenticateToken } from '../middleware/auth';
 
 const router = Router();
 

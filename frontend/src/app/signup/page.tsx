@@ -129,8 +129,7 @@ export default function SignupPage() {
                                 value={formData.username}
                                 onChange={handleInputChange}
                                 required
-                                className={`w-full px-4 py-3 border rounded-lg text-black focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors ${validationErrors.username ? 'border-red-300' : 'border-gray-300'
-                                    }`}
+                                className={`w-full px-4 py-3 border rounded-lg text-black focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors ${validationErrors.username ? 'border-red-300' : 'border-gray-300'}`}
                                 placeholder="Choose a username"
                             />
                             {validationErrors.username && (
@@ -150,8 +149,7 @@ export default function SignupPage() {
                                 value={formData.email}
                                 onChange={handleInputChange}
                                 required
-                                className={`w-full px-4 py-3 border rounded-lg text-black focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors ${validationErrors.email ? 'border-red-300' : 'border-gray-300'
-                                    }`}
+                                className={`w-full px-4 py-3 border rounded-lg text-black focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors ${validationErrors.email ? 'border-red-300' : 'border-gray-300'}`}
                                 placeholder="Enter your email"
                             />
                             {validationErrors.email && (
@@ -172,8 +170,7 @@ export default function SignupPage() {
                                     value={formData.password}
                                     onChange={handleInputChange}
                                     required
-                                    className={`w-full px-4 py-3 border rounded-lg text-black focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors pr-12 ${validationErrors.password ? 'border-red-300' : 'border-gray-300'
-                                        }`}
+                                    className={`w-full px-4 py-3 border rounded-lg text-black focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors pr-12 ${validationErrors.password ? 'border-red-300' : 'border-gray-300'}`}
                                     placeholder="Create a password"
                                 />
                                 <button
@@ -202,8 +199,7 @@ export default function SignupPage() {
                                     value={formData.confirmPassword}
                                     onChange={handleInputChange}
                                     required
-                                    className={`w-full px-4 py-3 border rounded-lg text-black focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors pr-12 ${validationErrors.confirmPassword ? 'border-red-300' : 'border-gray-300'
-                                        }`}
+                                    className={`w-full px-4 py-3 border rounded-lg text-black focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors pr-12 ${validationErrors.confirmPassword ? 'border-red-300' : 'border-gray-300'}`}
                                     placeholder="Confirm your password"
                                 />
                                 <button

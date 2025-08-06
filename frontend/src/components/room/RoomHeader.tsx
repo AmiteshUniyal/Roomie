@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Room } from '@/types';
+import roomService from '@/lib/services/roomService';
 
 interface RoomHeaderProps {
     room: Room;
@@ -16,9 +17,37 @@ interface RoomHeaderProps {
 export default function RoomHeader({ room, activeTab, onTabChange, isConnected, user }: RoomHeaderProps) {
     const router = useRouter();
     const [showMenu, setShowMenu] = useState(false);
+    const [isLeaving, setIsLeaving] = useState(false);
 
-    const handleLeaveRoom = () => {
-        router.push('/dashboard');
+    const handleLeaveRoom = async () => {
+        if (!confirm('Are you sure you want to leave this room?')) {
+            return;
+        }
+
+        setIsLeaving(true);
+        try {
+            await roomService.leaveRoom(room.id);
+            router.push('/dashboard');
+        } catch (error) {
+            console.error('Failed to leave room:', error);
+            alert('Failed to leave room. Please try again.');
+        } finally {
+            setIsLeaving(false);
+        }
+    };
+
+    const handleDeleteRoom = async () => {
+        if (!confirm('Are you sure you want to delete this room? This action cannot be undone.')) {
+            return;
+        }
+
+        try {
+            await roomService.deleteRoom(room.id);
+            router.push('/dashboard');
+        } catch (error) {
+            console.error('Failed to delete room:', error);
+            alert('Failed to delete room. Please try again.');
+        }
     };
 
     return (
@@ -67,7 +96,7 @@ export default function RoomHeader({ room, activeTab, onTabChange, isConnected, 
 
                 {/* Right side - Actions */}
                 <div className="flex items-center space-x-4">
-                    
+
                     {room.ownerId === user?.id && (
                         <div className="flex items-center space-x-2 px-4 py-2 bg-blue-50 border border-blue-200 rounded-lg">
                             <span className="text-sm text-blue-600 font-mono">{room.code || room.id}</span>
@@ -96,10 +125,23 @@ export default function RoomHeader({ room, activeTab, onTabChange, isConnected, 
                                         setShowMenu(false);
                                         handleLeaveRoom();
                                     }}
-                                    className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+                                    disabled={isLeaving}
+                                    className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 disabled:opacity-50"
                                 >
-                                    Leave Room
+                                    {isLeaving ? 'Leaving...' : 'Leave Room'}
                                 </button>
+
+                                {room.ownerId === user?.id && (
+                                    <button
+                                        onClick={() => {
+                                            setShowMenu(false);
+                                            handleDeleteRoom();
+                                        }}
+                                        className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 border-t border-gray-100"
+                                    >
+                                        Delete Room
+                                    </button>
+                                )}
                             </div>
                         )}
                     </div>

@@ -16,7 +16,7 @@ import {
     deleteRoomHandler,
     updateUserRoleHandler
 } from '../controllers/roomControllers/ownerHandler';
-import { authenticateToken } from '@/middleware/auth';
+import { authenticateToken } from '../middleware/auth';
 
 const router = Router();
 

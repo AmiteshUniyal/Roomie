@@ -16,13 +16,16 @@ export default function CreateRoomPage() {
     const [error, setError] = useState<string | null>(null);
 
     const router = useRouter();
-    // const { user } = useAppSelector((state) => state.auth);
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         const { name, value, type } = e.target;
         setFormData(prev => ({
             ...prev,
-            [name]: type === 'checkbox' ? (e.target as HTMLInputElement).checked : value
+            [name]: type === 'radio' && name === 'isPublic'
+                ? value === 'true'
+                : type === 'checkbox'
+                    ? (e.target as HTMLInputElement).checked
+                    : value
         }));
     };
 
@@ -39,11 +42,14 @@ export default function CreateRoomPage() {
 
         try {
             // Call the actual API
+            console.log('Sending room data:', formData);
             const response = await roomService.createRoom(formData);
+            console.log('Room created successfully:', response);
 
             // Redirect to the created room
             router.push(`/room/${response.room.id}`);
         } catch (error) {
+            console.error('Create room error:', error);
             setError(error instanceof Error ? error.message : 'Failed to create room');
         } finally {
             setIsLoading(false);
@@ -101,7 +107,7 @@ export default function CreateRoomPage() {
                                         value={formData.name}
                                         onChange={handleInputChange}
                                         required
-                                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                                        className="w-full px-4 py-3 text-black border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
                                         placeholder="Enter room name"
                                         maxLength={50}
                                     />
@@ -118,7 +124,7 @@ export default function CreateRoomPage() {
                                         value={formData.description}
                                         onChange={handleInputChange}
                                         rows={3}
-                                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors resize-none"
+                                        className="w-full px-4 py-3 text-black border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors resize-none"
                                         placeholder="Describe what this room is for..."
                                         maxLength={200}
                                     />
@@ -149,7 +155,7 @@ export default function CreateRoomPage() {
                                                 </div>
                                             </div>
                                         </label>
-                                        <label className="flex items-center space-x-3 cursor-pointer">
+                                        {/* <label className="flex items-center space-x-3 cursor-pointer">
                                             <input
                                                 type="radio"
                                                 name="isPublic"
@@ -161,10 +167,10 @@ export default function CreateRoomPage() {
                                             <div>
                                                 <div className="font-medium text-gray-900">Private Room</div>
                                                 <div className="text-sm text-gray-500">
-                                                    Only invited users can join
+                                                    Users must request access to join
                                                 </div>
                                             </div>
-                                        </label>
+                                        </label> */}
                                     </div>
                                 </div>
 
@@ -191,17 +197,6 @@ export default function CreateRoomPage() {
                                     )}
                                 </button>
                             </form>
-
-                            {/* Tips */}
-                            <div className="mt-8 p-4 bg-blue-50 rounded-lg">
-                                <h3 className="font-semibold text-blue-900 mb-2">💡 Tips for a great room</h3>
-                                <ul className="text-sm text-blue-800 space-y-1">
-                                    <li>• Use a descriptive name that reflects the room&apos;s purpose</li>
-                                    <li>• Add a description to help team members understand the room&apos;s goals</li>
-                                    <li>• Choose privacy settings based on your collaboration needs</li>
-                                    <li>• You can always change room settings later</li>
-                                </ul>
-                            </div>
                         </div>
                     </div>
                 </main>

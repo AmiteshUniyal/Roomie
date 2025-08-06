@@ -14,12 +14,16 @@ export const createRoomRequestHandler = async (req: Request, res: Response): Pro
         const { message } = req.body;
         const userId = req.user?.id;
 
+        console.log('Create room request:', { roomId, message, userId });
+
         if (!userId) {
             res.status(401).json({ error: 'Not authenticated' });
             return;
         }
 
         const result = await createRoomRequest(userId || '', roomId || '', message || '');
+
+        console.log('Create room request result:', result);
 
         if (!result.success) {
             res.status(result.statusCode || 400).json({ error: result.error });
