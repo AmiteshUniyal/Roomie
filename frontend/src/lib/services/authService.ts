@@ -16,7 +16,6 @@ export interface RegisterData {
 export interface AuthResponse {
     user: User;
     message: string;
-    token?: string; // Optional for cookie-based auth
 }
 
 // Auth service class

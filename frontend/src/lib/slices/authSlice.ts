@@ -8,7 +8,6 @@ interface AuthState {
     isAuthenticated: boolean;
     isLoading: boolean;
     error: string | null;
-    token: string | null;
 }
 
 // Initial state
@@ -17,7 +16,6 @@ const initialState: AuthState = {
     isAuthenticated: false,
     isLoading: false,
     error: null,
-    token: null,
 };
 
 // Async thunk for login
@@ -97,16 +95,10 @@ const authSlice = createSlice({
             state.error = null;
         },
 
-        // Set token
-        setToken: (state, action: PayloadAction<string>) => {
-            state.token = action.payload;
-        },
-
         // Clear user data
         clearUser: (state) => {
             state.user = null;
             state.isAuthenticated = false;
-            state.token = null;
             state.error = null;
         },
 
@@ -138,7 +130,6 @@ const authSlice = createSlice({
             .addCase(loginUser.fulfilled, (state, action) => {
                 state.isLoading = false;
                 state.user = action.payload.user;
-                state.token = action.payload.token || null;
                 state.isAuthenticated = true;
                 state.error = null;
             })
@@ -156,7 +147,6 @@ const authSlice = createSlice({
             .addCase(registerUser.fulfilled, (state, action) => {
                 state.isLoading = false;
                 state.user = action.payload.user;
-                state.token = action.payload.token || null;
                 state.isAuthenticated = true;
                 state.error = null;
             })
@@ -173,7 +163,6 @@ const authSlice = createSlice({
             .addCase(logoutUser.fulfilled, (state) => {
                 state.isLoading = false;
                 state.user = null;
-                state.token = null;
                 state.isAuthenticated = false;
                 state.error = null;
             })
@@ -191,7 +180,6 @@ const authSlice = createSlice({
             .addCase(getUserProfile.fulfilled, (state, action) => {
                 state.isLoading = false;
                 state.user = action.payload.user;
-                state.token = action.payload.token || null;
                 state.isAuthenticated = true;
                 state.error = null;
             })
@@ -209,7 +197,6 @@ const authSlice = createSlice({
             .addCase(checkAuthStatus.fulfilled, (state, action) => {
                 state.isLoading = false;
                 state.user = action.payload.user;
-                state.token = action.payload.token || null;
                 state.isAuthenticated = true;
                 state.error = null;
             })
@@ -217,14 +204,13 @@ const authSlice = createSlice({
                 state.isLoading = false;
                 state.isAuthenticated = false;
                 state.user = null;
-                state.token = null;
                 state.error = null;
             });
     },
 });
 
 // Export actions
-export const { setUser, setToken, clearUser, setError, clearError, updateUser } = authSlice.actions;
+export const { setUser, clearUser, setError, clearError, updateUser } = authSlice.actions;
 
 // Export reducer
 export default authSlice.reducer; 

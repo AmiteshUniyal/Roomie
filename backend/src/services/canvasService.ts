@@ -83,8 +83,6 @@ export const canvasService = {
         try {
             console.log(`🎨 Adding stroke to room ${roomId}:`, stroke);
 
-            // Use MongoDB's native atomic operations through Prisma's raw queries
-            // This is truly atomic - no race conditions possible
             await prisma.$runCommandRaw({
                 update: 'CanvasState',
                 updates: [

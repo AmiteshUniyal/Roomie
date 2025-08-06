@@ -53,7 +53,7 @@ interface CanvasStateData {
     timestamp: number;
 }
 
-export const setupSocketHandlers = (io: Server) => {
+export const   setupSocketHandlers = (io: Server) => {
     // Store connected users
     const connectedUsers = new Map<string, UserData>();
 
@@ -116,7 +116,6 @@ export const setupSocketHandlers = (io: Server) => {
                     return;
                 }
 
-                // Join the room
                 socket.join(roomId);
                 console.log(`✅ User ${userData.username} joined room ${roomId}`);
 
@@ -133,7 +132,6 @@ export const setupSocketHandlers = (io: Server) => {
                     }
                 } catch (error) {
                     console.error('Failed to load canvas state:', error);
-                    // Don't fail room join if canvas loading fails
                 }
 
                 // Update user presence

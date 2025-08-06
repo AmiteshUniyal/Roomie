@@ -6,25 +6,18 @@ import cookieParser from 'cookie-parser';
 import dotenv from 'dotenv';
 import { PrismaClient } from '@prisma/client';
 
+dotenv.config();
+
 // Import routes
 import authRoutes from './routes/auth';
 import roomRoutes from './routes/rooms';
 import documentRoutes from './routes/documents';
 
-// Import middleware
 import { authenticateToken } from './middleware/auth';
-
-// Import socket handlers
 import { setupSocketHandlers } from './services/socket';
 
-
-// Load environment variables
-dotenv.config();
-
-// Initialize Prisma
 export const prisma = new PrismaClient();
 
-// Create Express app
 const app = express();
 const server = createServer(app);
 
@@ -65,7 +58,7 @@ app.use('/api/documents', authenticateToken, documentRoutes);
 setupSocketHandlers(io);
 
 // Error handling middleware
-app.use((err: Error, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
+app.use((err: Error, _req: express.Request, res: express.Response) => {
     console.error(err.stack);
     res.status(500).json({
         error: 'Something went wrong!',
@@ -83,7 +76,6 @@ const PORT = process.env['PORT'] || 3001;
 
 const startServer = async () => {
     try {
-        // Test database connection
         await prisma.$connect();
         console.log('✅ Database connected successfully');
 
@@ -98,9 +90,9 @@ const startServer = async () => {
     }
 };
 
-// Graceful shutdown
+//shutdown
 process.on('SIGTERM', async () => {
-    console.log('🛑 SIGTERM received, shutting down gracefully');
+    console.log('🛑 SIGTERM received, shutting down');
     await prisma.$disconnect();
     server.close(() => {
         console.log('✅ Server closed');
@@ -109,7 +101,7 @@ process.on('SIGTERM', async () => {
 });
 
 process.on('SIGINT', async () => {
-    console.log('🛑 SIGINT received, shutting down gracefully');
+    console.log('🛑 SIGINT received, shutting down');
     await prisma.$disconnect();
     server.close(() => {
         console.log('✅ Server closed');

@@ -3,21 +3,15 @@
 import { configureStore } from '@reduxjs/toolkit';
 import { TypedUseSelectorHook, useDispatch, useSelector } from 'react-redux';
 
-// Import slices (we'll create these next)
+// Import slices
 import authReducer from './slices/authSlice';
 import roomReducer from './slices/roomSlice';
-import socketReducer from './slices/socketSlice';
-import editorReducer from './slices/editorSlice';
-import uiReducer from './slices/uiSlice';
 
 // Configure the store
 export const store = configureStore({
     reducer: {
         auth: authReducer,
         room: roomReducer,
-        socket: socketReducer,
-        editor: editorReducer,
-        ui: uiReducer,
     },
     middleware: (getDefaultMiddleware) =>
         getDefaultMiddleware({

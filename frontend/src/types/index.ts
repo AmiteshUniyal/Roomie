@@ -30,14 +30,6 @@ export interface Room {
     updatedAt: Date;
 }
 
-// Room member types
-export interface RoomMember {
-    userId: string;
-    roomId: string;
-    role: 'owner' | 'editor' | 'viewer';
-    joinedAt: Date;
-}
-
 // User presence in room
 export interface UserPresence {
     userId: string;
@@ -157,36 +149,4 @@ export interface SocketEvents {
         }>;
         lastUpdated: Date;
     };
-}
-
-// API response types
-export interface ApiResponse<T = unknown> {
-    success: boolean;
-    data?: T;
-    error?: string;
-    message?: string;
-}
-
-// Auth types
-export interface AuthState {
-    user: User | null;
-    isAuthenticated: boolean;
-    isLoading: boolean;
-}
-
-// Editor types
-export interface EditorState {
-    content: string;
-    isSaving: boolean;
-    lastSaved: Date | null;
-    version: number;
-}
-
-// Room state types
-export interface RoomState {
-    currentRoom: Room | null;
-    members: UserPresence[];
-    documents: Document[];
-    isLoading: boolean;
-    error: string | null;
 } 

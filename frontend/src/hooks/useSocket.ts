@@ -81,6 +81,9 @@ interface UseSocketReturn {
     onRoomMembers: (callback: (data: UserPresence[]) => void) => void;
 }
 
+
+
+// Custom hook for socket connection
 export const useSocket = (options: UseSocketOptions = {}): UseSocketReturn => {
     const { userId, username } = options;
     // State
@@ -91,7 +94,6 @@ export const useSocket = (options: UseSocketOptions = {}): UseSocketReturn => {
     const [roomMembers, setRoomMembers] = useState<UserPresence[]>([]);
     const [documents, setDocuments] = useState<Document[]>([]);
 
-    // Refs for cleanup
     const cleanupRef = useRef<(() => void)[]>([]);
 
     // Connect to socket
