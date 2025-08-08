@@ -155,7 +155,7 @@ export default function CreateRoomPage() {
                                                 </div>
                                             </div>
                                         </label>
-                                        {/* <label className="flex items-center space-x-3 cursor-pointer">
+                                        <label className="flex items-center space-x-3 cursor-pointer">
                                             <input
                                                 type="radio"
                                                 name="isPublic"
@@ -170,7 +170,7 @@ export default function CreateRoomPage() {
                                                     Users must request access to join
                                                 </div>
                                             </div>
-                                        </label> */}
+                                        </label>
                                     </div>
                                 </div>
 

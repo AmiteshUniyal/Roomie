@@ -1,4 +1,3 @@
-// Configuration for API and Socket.IO URLs
 export const config = {
     // API Configuration
     apiUrl: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api',

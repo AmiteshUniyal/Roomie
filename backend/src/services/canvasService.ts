@@ -6,7 +6,7 @@ export interface CanvasStroke {
     y: number;
     color: string;
     brushSize: number;
-    tool: 'pen' | 'eraser' | 'brush';
+    tool: 'pen' | 'eraser';
     userId: string;
     username: string;
     timestamp: number;

@@ -1,11 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Room, Document, UserPresence } from "@/types";
 import { documentService } from "@/lib/services/documentService";
 import { Loader2, Trash } from "lucide-react";
 import RoomRequests from "./RoomRequests";
 import { useAppSelector } from "@/lib/store";
+import roomService from "@/lib/services/roomService";
 
 interface RoomSidebarProps {
   room: Room;
@@ -14,6 +15,7 @@ interface RoomSidebarProps {
   onDocumentChange: (document: Document | null) => void;
   showActiveUsers: boolean;
   roomMembers?: UserPresence[];
+  switchToTab?: "documents" | "members" | "requests";
 }
 
 export default function RoomSidebar({
@@ -22,6 +24,7 @@ export default function RoomSidebar({
   activeDocument,
   onDocumentChange,
   roomMembers = [],
+  switchToTab,
 }: RoomSidebarProps) {
   const { user } = useAppSelector((state) => state.auth);
   const [activeTab, setActiveTab] = useState<
@@ -30,11 +33,55 @@ export default function RoomSidebar({
   const [showNewDocumentModal, setShowNewDocumentModal] = useState(false);
   const [newDocumentTitle, setNewDocumentTitle] = useState("");
   const [isCreatingDocument, setIsCreatingDocument] = useState(false);
-  const [isDeletingDocument, setIsDeletingDocument] = useState<string | null>(
-    null
-  );
+  const [isDeletingDocument, setIsDeletingDocument] = useState<string | null>(null);
+  const [pendingRequestsCount, setPendingRequestsCount] = useState(0);
 
   const isOwner = room.ownerId === user?.id;
+
+  // Switch to tab when requested from parent
+  useEffect(() => {
+    if (switchToTab) {
+      setActiveTab(switchToTab);
+    }
+  }, [switchToTab]);
+
+  // Fetch pending requests count for owners
+  useEffect(() => {
+    const fetchPendingRequestsCount = async () => {
+      if (isOwner && !room.isPublic) {
+        try {
+          const response = await roomService.getRoomRequests(room.id);
+          const pendingRequests = response.requests?.filter(
+            (request: any) => request.status === "pending"
+          ) || [];
+          setPendingRequestsCount(pendingRequests.length);
+        } catch (error) {
+          console.error("Failed to fetch pending requests count:", error);
+        }
+      }
+    };
+
+    fetchPendingRequestsCount();
+    
+    // Refresh count every 30 seconds
+    const interval = setInterval(fetchPendingRequestsCount, 30000);
+    return () => clearInterval(interval);
+  }, [isOwner, room.id, room.isPublic]);
+
+  // Function to refresh pending requests count
+  const refreshPendingRequestsCount = async () => {
+    if (isOwner && !room.isPublic) {
+      try {
+        const response = await roomService.getRoomRequests(room.id);
+        const pendingRequests = response.requests?.filter(
+          (request: any) => request.status === "pending"
+        ) || [];
+        setPendingRequestsCount(pendingRequests.length);
+      } catch (error) {
+        console.error("Failed to refresh pending requests count:", error);
+      }
+    }
+  };
 
   const handleCreateDocument = async () => {
     if (!newDocumentTitle.trim()) return;
@@ -119,16 +166,21 @@ export default function RoomSidebar({
           >
             👥 Members
           </button>
-          {!room.isPublic && (
+          {isOwner && !room.isPublic && (
             <button
               onClick={() => setActiveTab("requests")}
-              className={`flex-1 px-3 py-2 text-sm font-medium rounded-md transition-colors ${
+              className={`flex-1 px-3 py-2 text-sm font-medium rounded-md transition-colors relative ${
                 activeTab === "requests"
                   ? "bg-blue-100 text-blue-600"
                   : "text-gray-600 hover:text-gray-900"
               }`}
             >
               📝 Requests
+              {isOwner && pendingRequestsCount > 0 && (
+                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                  {pendingRequestsCount}
+                </span>
+              )}
             </button>
           )}
         </div>
@@ -248,7 +300,11 @@ export default function RoomSidebar({
             )}
           </div>
         ) : (
-          <RoomRequests roomId={room.id} isOwner={isOwner} />
+          <RoomRequests 
+            roomId={room.id} 
+            isOwner={isOwner} 
+            onRequestUpdate={refreshPendingRequestsCount}
+          />
         )}
       </div>
 

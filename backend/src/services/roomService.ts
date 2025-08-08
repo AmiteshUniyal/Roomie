@@ -151,11 +151,36 @@ export const getRoomById = async (roomId: string, userId: string): Promise<RoomR
     const isMember = room.members.some((member: any) => member.userId === userId);
     const isOwner = room.ownerId === userId;
 
+    // For private rooms, if user is not a member/owner, return limited room info for request access
     if (!isMember && !isOwner && !room.isPublic) {
+        // Check if user has any pending/approved request
+        const existingRequest = await prisma.roomRequest.findFirst({
+            where: {
+                userId,
+                roomId: room.id
+            }
+        });
+
+        // Return limited room info without sensitive data (documents, members)
+        const limitedRoom = {
+            id: room.id,
+            name: room.name,
+            description: room.description,
+            code: room.code,
+            isPublic: room.isPublic,
+            ownerId: room.ownerId,
+            owner: room.owner,
+            createdAt: room.createdAt,
+            updatedAt: room.updatedAt,
+            members: [], // Empty for non-members
+            documents: [], // Empty for non-members
+            userRequest: existingRequest // Include request status if any
+        };
+
         return {
-            success: false,
-            error: 'Access denied',
-            statusCode: 403
+            success: true,
+            room: limitedRoom,
+            statusCode: 202 // Indicates limited access - requires action
         };
     }
 
@@ -193,7 +218,46 @@ export const joinRoomByCode = async (roomCode: string, userId: string): Promise<
         };
     }
 
-    // Add user as member
+    // For private rooms, check if user has an approved request
+    if (!room.isPublic) {
+        const approvedRequest = await prisma.roomRequest.findFirst({
+            where: {
+                userId,
+                roomId: room.id,
+                status: 'APPROVED'
+            }
+        });
+
+        if (approvedRequest) {
+            // User has approved request, add them as member and clean up the request
+            await prisma.roomMember.create({
+                data: {
+                    userId,
+                    roomId: room.id,
+                    role: 'VIEWER'
+                }
+            });
+
+            // Delete the approved request since user is now a member
+            await prisma.roomRequest.delete({
+                where: { id: approvedRequest.id }
+            });
+
+            return {
+                success: true,
+                room
+            };
+        } else {
+            // No approved request, return room info for request access page
+            return {
+                success: true,
+                room,
+                statusCode: 202, // Accepted but requires action (request access)
+            };
+        }
+    }
+
+    // For public rooms, directly add user as member
     await prisma.roomMember.create({
         data: {
             userId,

@@ -24,11 +24,6 @@ export default function RequestAccessModal({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!message.trim()) {
-      alert("Please enter a message for your request.");
-      return;
-    }
-
     setIsSubmitting(true);
     try {
       console.log(
@@ -37,7 +32,7 @@ export default function RequestAccessModal({
         "with message:",
         message
       );
-      await roomService.requestRoomAccess(roomId, message);
+      await roomService.requestRoomAccess(roomId, message || "I would like to join this room");
       console.log("Access request sent successfully");
       onSuccess();
       onClose();

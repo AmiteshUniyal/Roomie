@@ -12,7 +12,6 @@ class SocketManager {
     private username: string | null = null;
     private isConnecting = false;
 
-    // Singleton pattern
     private static instance: SocketManager;
 
     public static getInstance(): SocketManager {
@@ -152,7 +151,7 @@ class SocketManager {
         x: number;
         y: number;
         color: string;
-        tool: 'pen' | 'eraser' | 'brush';
+        tool: 'pen' | 'eraser';
         strokeWidth: number;
         type?: 'start' | 'draw' | 'end';
     }): void {

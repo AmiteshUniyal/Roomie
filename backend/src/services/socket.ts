@@ -40,7 +40,7 @@ interface CanvasDrawData {
         y: number;
         color: string;
         brushSize: number;
-        tool: 'pen' | 'eraser' | 'brush';
+        tool: 'pen' | 'eraser';
     };
     timestamp: number;
 }

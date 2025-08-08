@@ -14,7 +14,8 @@ export interface JoinRoomData {
 
 export interface RoomResponse {
     room: Room;
-    message: string;
+    message?: string;
+    statusCode?: number;
 }
 
 export interface RoomsResponse {
@@ -34,7 +35,7 @@ export interface RoomRequest {
     roomId: string;
     roomName: string;
     message?: string;
-    status: 'pending' | 'approved' | 'rejected';
+    status: 'PENDING' | 'APPROVED' | 'REJECTED';
     createdAt: Date;
 }
 

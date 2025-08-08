@@ -68,7 +68,7 @@ interface UseSocketReturn {
         x: number;
         y: number;
         color: string;
-        tool: 'pen' | 'eraser' | 'brush';
+        tool: 'pen' | 'eraser';
         strokeWidth: number;
         type?: 'start' | 'draw' | 'end';
     }) => void;
@@ -187,7 +187,7 @@ export const useSocket = (options: UseSocketOptions = {}): UseSocketReturn => {
         x: number;
         y: number;
         color: string;
-        tool: 'pen' | 'eraser' | 'brush';
+        tool: 'pen' | 'eraser';
         strokeWidth: number;
         type?: 'start' | 'draw' | 'end';
     }) => {

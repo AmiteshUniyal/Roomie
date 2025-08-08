@@ -19,6 +19,29 @@ export interface Document {
 }
 
 // Room types
+export interface RoomMember {
+    id: string;
+    userId: string;
+    roomId: string;
+    role: 'OWNER' | 'ADMIN' | 'VIEWER';
+    createdAt: Date;
+    user: {
+        id: string;
+        username: string;
+        avatar?: string;
+    };
+}
+
+export interface RoomRequest {
+    id: string;
+    userId: string;
+    roomId: string;
+    message?: string;
+    status: 'PENDING' | 'APPROVED' | 'REJECTED';
+    createdAt: Date;
+    updatedAt: Date;
+}
+
 export interface Room {
     id: string;
     name: string;
@@ -28,6 +51,14 @@ export interface Room {
     isPublic: boolean;
     createdAt: Date;
     updatedAt: Date;
+    owner?: {
+        id: string;
+        username: string;
+        avatar?: string;
+    };
+    members?: RoomMember[];
+    documents?: Document[];
+    userRequest?: RoomRequest; // For limited access responses
 }
 
 // User presence in room
@@ -124,7 +155,7 @@ export interface SocketEvents {
             y: number;
             color: string;
             brushSize: number;
-            tool: 'pen' | 'eraser' | 'brush';
+            tool: 'pen' | 'eraser';
         };
         timestamp: number;
     };
@@ -142,7 +173,7 @@ export interface SocketEvents {
             y: number;
             color: string;
             brushSize: number;
-            tool: 'pen' | 'eraser' | 'brush';
+            tool: 'pen' | 'eraser';
             userId: string;
             username: string;
             timestamp: number;

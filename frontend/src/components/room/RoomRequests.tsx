@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import roomService from "@/lib/services/roomService";
+import { CheckCircle, XCircle } from "lucide-react";
 
 interface RoomRequest {
   id: string;
@@ -10,16 +11,17 @@ interface RoomRequest {
   roomId: string;
   roomName: string;
   message?: string;
-  status: "pending" | "approved" | "rejected";
+  status: string;
   createdAt: Date;
 }
 
 interface RoomRequestsProps {
   roomId: string;
   isOwner: boolean;
+  onRequestUpdate?: () => void;
 }
 
-export default function RoomRequests({ roomId, isOwner }: RoomRequestsProps) {
+export default function RoomRequests({ roomId, isOwner, onRequestUpdate }: RoomRequestsProps) {
   const [requests, setRequests] = useState<RoomRequest[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -30,13 +32,12 @@ export default function RoomRequests({ roomId, isOwner }: RoomRequestsProps) {
       setError(null);
 
       if (isOwner) {
-        // Fetch requests for this room (owner view)
         const response = await roomService.getRoomRequests(roomId);
-        setRequests(response.requests || []);
-      } else {
-        // Fetch user's own requests
+        setRequests(response.requests);
+      } 
+      else {
         const response = await roomService.getUserRequests();
-        setRequests(response.requests || []);
+        setRequests(response.requests);
       }
     } catch (error) {
       console.error("Failed to fetch requests:", error);
@@ -53,8 +54,9 @@ export default function RoomRequests({ roomId, isOwner }: RoomRequestsProps) {
   const handleApproveRequest = async (requestId: string) => {
     try {
       await roomService.approveRoomRequest(requestId);
-      // Refresh the requests list
       fetchRequests();
+      // Notify parent component
+      onRequestUpdate?.();
     } catch (error) {
       console.error("Failed to approve request:", error);
       alert("Failed to approve request. Please try again.");
@@ -64,8 +66,9 @@ export default function RoomRequests({ roomId, isOwner }: RoomRequestsProps) {
   const handleRejectRequest = async (requestId: string) => {
     try {
       await roomService.rejectRoomRequest(requestId);
-      // Refresh the requests list
       fetchRequests();
+      // Notify parent component
+      onRequestUpdate?.();
     } catch (error) {
       console.error("Failed to reject request:", error);
       alert("Failed to reject request. Please try again.");
@@ -138,15 +141,11 @@ export default function RoomRequests({ roomId, isOwner }: RoomRequestsProps) {
               <div className="flex-1">
                 <div className="flex items-center space-x-2 mb-2">
                   <span className="font-medium text-gray-900">
-                    {isOwner ? request.username : request.roomName}
+                    {request.username}
                   </span>
                   <span
                     className={`text-xs px-2 py-1 rounded-full ${
-                      request.status === "pending"
-                        ? "bg-yellow-100 text-yellow-800"
-                        : request.status === "approved"
-                        ? "bg-green-100 text-green-800"
-                        : "bg-red-100 text-red-800"
+                      request.status === "PENDING" ? "bg-yellow-100 text-yellow-800" : request.status === "APPROVED"  ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
                     }`}
                   >
                     {request.status}
@@ -164,19 +163,21 @@ export default function RoomRequests({ roomId, isOwner }: RoomRequestsProps) {
                 </p>
               </div>
 
-              {isOwner && request.status === "pending" && (
+              {isOwner && request.status === "PENDING" && (
                 <div className="flex space-x-2">
                   <button
                     onClick={() => handleApproveRequest(request.id)}
-                    className="px-3 py-1 bg-green-600 text-white text-sm rounded hover:bg-green-700 transition-colors"
+                    className="text-green-600 hover:text-green-700 transition-colors"
+                    title="Approve Request"
                   >
-                    Approve
+                    <CheckCircle className="w-5 h-5" />
                   </button>
                   <button
                     onClick={() => handleRejectRequest(request.id)}
-                    className="px-3 py-1 bg-red-600 text-white text-sm rounded hover:bg-red-700 transition-colors"
+                    className="text-red-600 hover:text-red-700 transition-colors"
+                    title="Reject Request"
                   >
-                    Reject
+                    <XCircle className="w-5 h-5" />
                   </button>
                 </div>
               )}

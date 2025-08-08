@@ -229,35 +229,26 @@ export const approveRoomRequest = async (requestId: string, userId: string): Pro
             };
         }
 
-        // Update request status and add user to room
-        const [updatedRequest, _] = await prisma.$transaction([
-            prisma.roomRequest.update({
-                where: { id: requestId },
-                data: { status: 'APPROVED' },
-                include: {
-                    user: {
-                        select: {
-                            id: true,
-                            username: true,
-                            avatar: true
-                        }
-                    },
-                    room: {
-                        select: {
-                            id: true,
-                            name: true
-                        }
+        // Update request status only (user will join via room code)
+        const updatedRequest = await prisma.roomRequest.update({
+            where: { id: requestId },
+            data: { status: 'APPROVED' },
+            include: {
+                user: {
+                    select: {
+                        id: true,
+                        username: true,
+                        avatar: true
+                    }
+                },
+                room: {
+                    select: {
+                        id: true,
+                        name: true
                     }
                 }
-            }),
-            prisma.roomMember.create({
-                data: {
-                    userId: request.userId,
-                    roomId: request.roomId,
-                    role: 'VIEWER'
-                }
-            })
-        ]);
+            }
+        });
 
         return {
             success: true,

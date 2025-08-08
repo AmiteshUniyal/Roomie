@@ -17,7 +17,9 @@ export const getRoomByIdHandler = async (req: Request, res: Response): Promise<v
             return;
         }
 
-        res.json({ room: result.room });
+        // Send response with appropriate status code
+        const statusCode = result.statusCode || 200;
+        res.status(statusCode).json({ room: result.room });
     } catch (error) {
         console.error('Get room error:', error);
         res.status(500).json({ error: 'Failed to get room' });

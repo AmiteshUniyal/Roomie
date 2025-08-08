@@ -1,5 +1,5 @@
-import { joinRoomByCode } from "../../services/roomService";
 import { Request, Response } from "express";
+import { joinRoomByCode } from "../../services/roomService";
 
 export const joinRoomHandler = async (req: Request, res: Response): Promise<void> => {
     try {

@@ -18,7 +18,6 @@ import { documentService } from "@/lib/services/documentService";
 export default function RoomPage() {
   const params = useParams();
   const router = useRouter();
-  // const dispatch = useAppDispatch();
   const { user, isAuthenticated } = useAppSelector((state) => state.auth);
   const roomId = params.roomId as string;
 
@@ -45,6 +44,27 @@ export default function RoomPage() {
   const [error, setError] = useState<string | null>(null);
   const [showRequestModal, setShowRequestModal] = useState(false);
   const [accessDenied, setAccessDenied] = useState(false);
+  const [pendingRequestsCount, setPendingRequestsCount] = useState(0);
+  const [sidebarTab, setSidebarTab] = useState<"documents" | "members" | "requests">("documents");
+
+  // Check for pending requests if user is owner
+  useEffect(() => {
+    const checkPendingRequests = async () => {
+      if (room && user && room.ownerId === user.id && !room.isPublic) {
+        try {
+          const response = await roomService.getRoomRequests(room.id);
+          const pendingRequests = response.requests?.filter(
+            (request: any) => request.status === "pending"
+          ) || [];
+          setPendingRequestsCount(pendingRequests.length);
+        } catch (error) {
+          console.error("Failed to fetch pending requests:", error);
+        }
+      }
+    };
+
+    checkPendingRequests();
+  }, [room, user]);
 
   // Handle user joined/left events
   useEffect(() => {
@@ -96,11 +116,19 @@ export default function RoomPage() {
         setRoom(roomResponse.room);
         console.log("✅ Room data loaded:", roomResponse.room);
 
-        // Check if user has access to private room
-        if (
-          !roomResponse.room.isPublic &&
-          roomResponse.room.ownerId !== user?.id
-        ) {
+        // Check if this is a limited access response (status 202)
+        if (roomResponse.statusCode === 202) {
+          // User has limited access to private room - show request access interface
+          setAccessDenied(true);
+          setIsLoading(false);
+          return;
+        }
+
+        // Check if user has access to private room (fallback check)
+        const isMember = roomResponse.room.members?.some((member: any) => member.userId === user?.id);
+        const isOwner = roomResponse.room.ownerId === user?.id;
+        
+        if (!roomResponse.room.isPublic && !isMember && !isOwner) {
           setAccessDenied(true);
           setIsLoading(false);
           return;
@@ -224,7 +252,7 @@ export default function RoomPage() {
             <p className="text-gray-600 mb-6">
               This room is private. You need to request access to join.
             </p>
-            <div className="space-y-3">
+            <div className="space-y-3 space-x-3">
               <button
                 onClick={() => setShowRequestModal(true)}
                 className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors"
@@ -233,7 +261,7 @@ export default function RoomPage() {
               </button>
               <button
                 onClick={() => router.push("/dashboard")}
-                className="block w-full bg-gray-300 text-gray-700 px-6 py-3 rounded-lg hover:bg-gray-400 transition-colors"
+                className="bg-gray-300 text-gray-700 px-6 py-3 rounded-lg hover:bg-gray-400 transition-colors"
               >
                 Back to Dashboard
               </button>
@@ -248,7 +276,6 @@ export default function RoomPage() {
           onClose={() => setShowRequestModal(false)}
           onSuccess={() => {
             setAccessDenied(false);
-            // Refresh the page to load room data
             window.location.reload();
           }}
         />
@@ -268,6 +295,28 @@ export default function RoomPage() {
           onToggleActiveUsers={() => setShowActiveUsers(!showActiveUsers)}
           user={user}
         />
+
+        {/* Pending Requests Notification */}
+        {room.ownerId === user?.id && pendingRequestsCount > 0 && (
+          <div className="bg-yellow-50 border-b border-yellow-200 px-4 py-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-2">
+                <div className="text-yellow-600">🔔</div>
+                <span className="text-sm text-yellow-800">
+                  You have {pendingRequestsCount} pending room request{pendingRequestsCount > 1 ? 's' : ''}
+                </span>
+              </div>
+              <button
+                onClick={() => {
+                  setSidebarTab("requests");
+                }}
+                className="text-sm text-yellow-700 hover:text-yellow-900 font-medium"
+              >
+                View Requests →
+              </button>
+            </div>
+          </div>
+        )}
 
         <div className="flex-1 flex">
           {/* Main Content Area */}
@@ -300,6 +349,7 @@ export default function RoomPage() {
             }}
             showActiveUsers={showActiveUsers}
             roomMembers={roomMembers}
+            switchToTab={sidebarTab}
           />
         </div>
 
