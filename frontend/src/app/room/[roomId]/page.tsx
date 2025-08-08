@@ -11,8 +11,8 @@ import Whiteboard from "@/components/room/Whiteboard";
 import UserPresence from "@/components/room/UserPresence";
 import RoomSidebar from "@/components/room/RoomSidebar";
 import RequestAccessModal from "@/components/room/RequestAccessModal";
-import { Room, Document } from "@/types";
-import roomService from "@/lib/services/roomService";
+import { Room, Document, RoomMember } from "@/types";
+import roomService, { RoomRequest } from "@/lib/services/roomService";
 import { documentService } from "@/lib/services/documentService";
 
 export default function RoomPage() {
@@ -45,7 +45,9 @@ export default function RoomPage() {
   const [showRequestModal, setShowRequestModal] = useState(false);
   const [accessDenied, setAccessDenied] = useState(false);
   const [pendingRequestsCount, setPendingRequestsCount] = useState(0);
-  const [sidebarTab, setSidebarTab] = useState<"documents" | "members" | "requests">("documents");
+  const [sidebarTab, setSidebarTab] = useState<
+    "documents" | "members" | "requests"
+  >("documents");
 
   // Check for pending requests if user is owner
   useEffect(() => {
@@ -53,9 +55,10 @@ export default function RoomPage() {
       if (room && user && room.ownerId === user.id && !room.isPublic) {
         try {
           const response = await roomService.getRoomRequests(room.id);
-          const pendingRequests = response.requests?.filter(
-            (request: any) => request.status === "pending"
-          ) || [];
+          const pendingRequests =
+            response.requests?.filter(
+              (request: RoomRequest) => request.status === "PENDING"
+            ) || [];
           setPendingRequestsCount(pendingRequests.length);
         } catch (error) {
           console.error("Failed to fetch pending requests:", error);
@@ -125,9 +128,11 @@ export default function RoomPage() {
         }
 
         // Check if user has access to private room (fallback check)
-        const isMember = roomResponse.room.members?.some((member: any) => member.userId === user?.id);
+        const isMember = roomResponse.room.members?.some(
+          (member: RoomMember) => member.userId === user?.id
+        );
         const isOwner = roomResponse.room.ownerId === user?.id;
-        
+
         if (!roomResponse.room.isPublic && !isMember && !isOwner) {
           setAccessDenied(true);
           setIsLoading(false);
@@ -303,7 +308,8 @@ export default function RoomPage() {
               <div className="flex items-center space-x-2">
                 <div className="text-yellow-600">🔔</div>
                 <span className="text-sm text-yellow-800">
-                  You have {pendingRequestsCount} pending room request{pendingRequestsCount > 1 ? 's' : ''}
+                  You have {pendingRequestsCount} pending room request
+                  {pendingRequestsCount > 1 ? "s" : ""}
                 </span>
               </div>
               <button

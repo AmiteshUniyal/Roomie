@@ -6,7 +6,7 @@ import { documentService } from "@/lib/services/documentService";
 import { Loader2, Trash } from "lucide-react";
 import RoomRequests from "./RoomRequests";
 import { useAppSelector } from "@/lib/store";
-import roomService from "@/lib/services/roomService";
+import roomService, { RoomRequest } from "@/lib/services/roomService";
 
 interface RoomSidebarProps {
   room: Room;
@@ -33,7 +33,9 @@ export default function RoomSidebar({
   const [showNewDocumentModal, setShowNewDocumentModal] = useState(false);
   const [newDocumentTitle, setNewDocumentTitle] = useState("");
   const [isCreatingDocument, setIsCreatingDocument] = useState(false);
-  const [isDeletingDocument, setIsDeletingDocument] = useState<string | null>(null);
+  const [isDeletingDocument, setIsDeletingDocument] = useState<string | null>(
+    null
+  );
   const [pendingRequestsCount, setPendingRequestsCount] = useState(0);
 
   const isOwner = room.ownerId === user?.id;
@@ -51,9 +53,10 @@ export default function RoomSidebar({
       if (isOwner && !room.isPublic) {
         try {
           const response = await roomService.getRoomRequests(room.id);
-          const pendingRequests = response.requests?.filter(
-            (request: any) => request.status === "pending"
-          ) || [];
+          const pendingRequests =
+            response.requests?.filter(
+              (request: RoomRequest) => request.status === "PENDING"
+            ) || [];
           setPendingRequestsCount(pendingRequests.length);
         } catch (error) {
           console.error("Failed to fetch pending requests count:", error);
@@ -62,7 +65,7 @@ export default function RoomSidebar({
     };
 
     fetchPendingRequestsCount();
-    
+
     // Refresh count every 30 seconds
     const interval = setInterval(fetchPendingRequestsCount, 30000);
     return () => clearInterval(interval);
@@ -73,9 +76,10 @@ export default function RoomSidebar({
     if (isOwner && !room.isPublic) {
       try {
         const response = await roomService.getRoomRequests(room.id);
-        const pendingRequests = response.requests?.filter(
-          (request: any) => request.status === "pending"
-        ) || [];
+        const pendingRequests =
+          response.requests?.filter(
+            (request: RoomRequest) => request.status === "PENDING"
+          ) || [];
         setPendingRequestsCount(pendingRequests.length);
       } catch (error) {
         console.error("Failed to refresh pending requests count:", error);
@@ -300,9 +304,9 @@ export default function RoomSidebar({
             )}
           </div>
         ) : (
-          <RoomRequests 
-            roomId={room.id} 
-            isOwner={isOwner} 
+          <RoomRequests
+            roomId={room.id}
+            isOwner={isOwner}
             onRequestUpdate={refreshPendingRequestsCount}
           />
         )}
